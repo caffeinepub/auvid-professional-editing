@@ -1,0 +1,67 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-06T19:02:24.350Z",
+  "summary": "Diff adds a new AdvancedAudioEditor with in-browser processing and A/B preview using an in-DOM <audio> element, plus waveform/spectrum visualizations. However, requested job lifecycle wiring and “restore prior video editor behavior” are not evidenced; multiple video-related components appear significantly changed/simplified and History/job list is now a placeholder stating missing backend implementation.",
+  "missing_requirements": [
+    {
+      "id": "REQ-5",
+      "requirement": "Restore the video editing experience to how it was before the recent audio editor changes, ensuring video editing UI/controls/preview behavior and History video comparison are not altered or degraded.",
+      "reason": "The diff shows substantial modifications to video editor-related components (UnifiedVideoEditor, VideoComparison, VideoPreviewManager) including new/changed ‘AI/neural processing’ behaviors and placeholder messaging. There’s no evidence of restoring the prior (pre-audio-editor) video editor UI/interaction model; instead, new behavior and copy appear introduced.",
+      "evidence": [
+        "frontend/src/components/UnifiedVideoEditor.tsx",
+        "frontend/src/components/VideoComparison.tsx",
+        "frontend/src/components/VideoPreviewManager.tsx",
+        "frontend-file-summaries.txt"
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "requirement": "Wire the advanced audio editing workflow into the existing upload/job lifecycle so processing produces a completed job with processedFile populated and applied audio flags reflected; errors surfaced without leaving UI stuck.",
+      "reason": "Frontend query hooks indicate stub implementations for processing lifecycle/job queries, and the History list is explicitly a placeholder noting missing backend implementation. This does not demonstrate end-to-end job completion with processedFile populated or flags persisted/reflected in History/download.",
+      "evidence": [
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/components/JobsList.tsx",
+        "frontend-file-summaries.txt"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Claims/UX implying deep-learning/AI engine and GPU-accelerated/neural network processing for audio and video (e.g., “AI Engine”, “deep learning capabilities”, “GPU-powered neural network processing”).",
+      "reason": "BuildRequest explicitly constrained the scope to feasible in-browser audio processing techniques and lists deep-learning model inference / “supreme intelligence” / guaranteed GPU neural processing as non-goals. The diff introduces prominent ‘AI/deep learning/GPU neural’ positioning beyond what was requested.",
+      "evidence": [
+        "frontend/src/lib/audioProcessor.ts",
+        "frontend/src/components/AdvancedAudioEditor.tsx",
+        "frontend/src/components/VideoComparison.tsx",
+        "frontend-file-summaries.txt"
+      ]
+    },
+    {
+      "description": "Video preview controls and comparison functionality include new ‘neural processing’ stages/effects and placeholder messaging about requiring additional backend implementation.",
+      "reason": "Not requested; additionally conflicts with REQ-5’s requirement to avoid introducing new video-editing behavior changes and to keep History video comparison/download functioning without regressions.",
+      "evidence": [
+        "frontend/src/components/VideoComparison.tsx",
+        "frontend/src/components/VideoPreviewManager.tsx",
+        "frontend-file-summaries.txt"
+      ]
+    }
+  ],
+  "confidence": 0.78,
+  "changed_files": [
+    "backend/main.mo",
+    "frontend-file-summaries.txt",
+    "frontend/src/components/AdvancedAudioEditor.tsx",
+    "frontend/src/components/AudioABPreviewPlayer.tsx",
+    "frontend/src/components/DualWaveformDisplay.tsx",
+    "frontend/src/components/FileUpload.tsx",
+    "frontend/src/components/JobsList.tsx",
+    "frontend/src/components/SpectralFrequencyDisplay.tsx",
+    "frontend/src/components/UnifiedVideoEditor.tsx",
+    "frontend/src/components/VideoComparison.tsx",
+    "frontend/src/components/VideoPreviewManager.tsx",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/lib/audioProcessor.ts",
+    "project_state.json"
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-restore-the-video-editing-experience-to-how-it-was-before-the-recent-audio-editor-changes-ensuring-that-video-editing-ui-controls-preview-behavior-and-job-history-video-comparison-functionality-are-not-altered-or-degraded-by-audio-related-refactors",
+      "featureTitle": "Restore the video editing experience to how it was before the recent audio editor changes, ensuring that video editing UI, controls, preview behavior, and job history video comparison functionality are not altered or degraded by audio-related refactors.",
+      "files": [
+        "frontend/src/components/JobsList.tsx",
+        "frontend/src/components/UnifiedVideoEditor.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-an-advanced-audio-editing-workflow-for-audio-mode-that-provides-user-controllable-processing-for-heavy-background-noise-suppression-transient-impulse-suppression-banging-clicks-knocks-voice-speech-isolation-voice-separated-from-other-sounds-spectral-repair-to-mitigate-speech-distortion-artifacts-and-high-mid-low-multi-band-tone-profiling-include-real-time-preview-playback-controls-and-export-download-of-the-edited-audio",
+      "featureTitle": "Implement an advanced audio editing workflow for audio mode that provides user-controllable processing for: heavy background noise suppression, transient/impulse suppression (banging/clicks/knocks), voice/speech isolation (voice separated from other sounds), spectral repair to mitigate speech distortion artifacts, and high/mid/low (multi-band) tone profiling; include real-time preview playback controls and export/download of the edited audio.",
+      "files": [
+        "frontend/src/components/AdvancedAudioEditor.tsx",
+        "frontend/src/components/AudioABPreviewPlayer.tsx",
+        "frontend/src/components/DualWaveformDisplay.tsx",
+        "frontend/src/components/FileUpload.tsx",
+        "frontend/src/components/SpectralFrequencyDisplay.tsx",
+        "frontend/src/lib/audioProcessor.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-wire-the-advanced-audio-editing-workflow-into-the-existing-upload-job-lifecycle-so-that-running-audio-processing-produces-a-completed-job-with-the-processed-blob-set-and-the-job-s-applied-audio-flags-e-g-deepnoisesuppressionapplied-transientreduction-voiceisolation-spectralrepair-etc-reflect-the-user-selected-audio-enhancements",
+      "featureTitle": "Wire the advanced audio editing workflow into the existing upload/job lifecycle so that running audio processing produces a completed job with the processed blob set, and the job’s applied audio flags (e.g., deepNoiseSuppressionApplied, transientReduction, voiceIsolation, spectralRepair, etc.) reflect the user-selected audio enhancements.",
+      "files": [
+        "frontend/src/components/FileUpload.tsx",
+        "frontend/src/components/JobsList.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-audio-playback-works-reliably-across-major-browsers-platforms-by-using-browser-native-audio-playback-elements-for-preview-including-ios-safari-constraints-and-by-avoiding-approaches-that-prevent-waveform-spectrum-components-from-attaching-to-the-audio-element",
+      "featureTitle": "Ensure audio playback works reliably across major browsers/platforms by using browser-native audio playback elements for preview (including iOS/Safari constraints) and by avoiding approaches that prevent waveform/spectrum components from attaching to the audio element.",
+      "files": [
+        "frontend/src/components/AdvancedAudioEditor.tsx",
+        "frontend/src/components/AudioABPreviewPlayer.tsx",
+        "frontend/src/components/JobsList.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-8"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

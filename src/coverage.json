@@ -1,0 +1,106 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-06T19:02:24.353Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 4,
+    "implemented": 4,
+    "items": [
+      {
+        "id": "REQ-5",
+        "summary": "Restore the video editing experience to how it was before the recent audio editor changes, ensuring that video editing UI, controls, preview behavior, and job history video comparison functionality are not altered or degraded by audio-related refactors.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/Dashboard.tsx",
+          "frontend/src/components/JobsList.tsx",
+          "frontend/src/components/UnifiedVideoEditor.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/JobsList.tsx",
+          "frontend/src/components/UnifiedVideoEditor.tsx"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Implement an advanced audio editing workflow for audio mode that provides user-controllable processing for: heavy background noise suppression, transient/impulse suppression (banging/clicks/knocks), voice/speech isolation (voice separated from other sounds), spectral repair to mitigate speech distortion artifacts, and high/mid/low (multi-band) tone profiling; include real-time preview playback controls and export/download of the edited audio.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/AdvancedAudioEditor.tsx",
+          "frontend/src/components/FileUpload.tsx",
+          "frontend/src/lib/audioProcessor.ts",
+          "frontend/src/components/AudioABPreviewPlayer.tsx",
+          "frontend/src/components/SpectralFrequencyDisplay.tsx",
+          "frontend/src/components/DualWaveformDisplay.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/AdvancedAudioEditor.tsx",
+          "frontend/src/components/FileUpload.tsx",
+          "frontend/src/lib/audioProcessor.ts",
+          "frontend/src/components/AudioABPreviewPlayer.tsx",
+          "frontend/src/components/SpectralFrequencyDisplay.tsx",
+          "frontend/src/components/DualWaveformDisplay.tsx"
+        ]
+      },
+      {
+        "id": "REQ-7",
+        "summary": "Wire the advanced audio editing workflow into the existing upload/job lifecycle so that running audio processing produces a completed job with the processed blob set, and the job’s applied audio flags (e.g., deepNoiseSuppressionApplied, transientReduction, voiceIsolation, spectralRepair, etc.) reflect the user-selected audio enhancements.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/FileUpload.tsx",
+          "frontend/src/components/JobsList.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/FileUpload.tsx",
+          "frontend/src/components/JobsList.tsx"
+        ]
+      },
+      {
+        "id": "REQ-8",
+        "summary": "Ensure audio playback works reliably across major browsers/platforms by using browser-native audio playback elements for preview (including iOS/Safari constraints) and by avoiding approaches that prevent waveform/spectrum components from attaching to the audio element.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/AudioABPreviewPlayer.tsx",
+          "frontend/src/components/AdvancedAudioEditor.tsx",
+          "frontend/src/components/JobsList.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/AudioABPreviewPlayer.tsx",
+          "frontend/src/components/AdvancedAudioEditor.tsx",
+          "frontend/src/components/JobsList.tsx"
+        ]
+      }
+    ]
+  },
+  "changedFiles": [
+    "backend/main.mo",
+    "build-request.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/AdvancedAudioEditor.tsx",
+    "frontend/src/components/AudioABPreviewPlayer.tsx",
+    "frontend/src/components/DualWaveformDisplay.tsx",
+    "frontend/src/components/FileUpload.tsx",
+    "frontend/src/components/JobsList.tsx",
+    "frontend/src/components/SpectralFrequencyDisplay.tsx",
+    "frontend/src/components/UnifiedVideoEditor.tsx",
+    "frontend/src/components/VideoComparison.tsx",
+    "frontend/src/components/VideoPreviewManager.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/lib/audioProcessor.ts",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}
