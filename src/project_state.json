@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 9,
-  "summary": "Auvid Professional Editing is a React + Motoko Internet Computer application for authenticated media upload, job tracking, and preview/download. The user now wants (1) video editing restored to its prior behavior (it was not supposed to change) and (2) to add a highly advanced AI/deep-learning-driven audio editing workflow including heavy noise reduction, transient suppression, voice/source separation, spectral repair, multi-band (high/mid/low) profiling, cross-platform playback, and GPU/CPU-accelerated real-time editing with auto-error correction.",
+  "projectStateVersion": 11,
+  "summary": "Auvid Professional Editing is a React + Motoko Internet Computer application for authenticated media upload, job tracking, and preview/download. Current direction: keep the video editor unchanged, and upgrade/strengthen the browser-based DSP audio toolset (noise reduction, transient suppression, voice/dialogue isolation, spectral repair, dynamic EQ, de-click/de-chirp) to be as robust/industrial-grade as feasible without deep-learning GPU models.",
   "architectural_notes": [
     "Frontend uses React with TanStack React Query for all canister calls (queries + mutations) and periodic polling for job/status updates.",
     "Authentication is via DFINITY Internet Identity using AuthClient, exposed through a React Context provider; identity persists across reloads.",
@@ -298,6 +298,46 @@
         "REQ-8"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-upgrade-the-in-browser-audio-dsp-pipeline-in-frontend-src-lib-audioprocessor-ts-to-provide-noticeably-stronger-results-for-noise-background-suppression-transient-impulse-suppression-clicks-knocks-bangs-voice-dialogue-isolation-spectral-repair-dynamic-eq-and-de-click-de-chirp-all-within-web-audio-api-offlineaudiocontext-constraints-no-deep-learning-model-claims",
+      "title": "Upgrade the in-browser audio DSP pipeline in `frontend/src/lib/audioProcessor.ts` to provide noticeably stronger results for: noise/background suppression, transient/impulse suppression (clicks/knocks/bangs), voice/dialogue isolation, spectral repair, dynamic EQ, and de-click/de-chirp (all within Web Audio API + OfflineAudioContext constraints; no deep-learning model claims).",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-wire-the-existing-strength-controls-in-frontend-src-components-advancedaudioeditor-tsx-e-g-noisesuppressionstrength-transientsuppressionstrength-voiceisolationstrength-spectralrepairstrength-into-the-dsp-pipeline-so-that-changing-a-slider-measurably-changes-the-processing-outcome-rather-than-only-toggling-stages-on-off",
+      "title": "Wire the existing strength controls in `frontend/src/components/AdvancedAudioEditor.tsx` (e.g., `noiseSuppressionStrength`, `transientSuppressionStrength`, `voiceIsolationStrength`, `spectralRepairStrength`) into the DSP pipeline so that changing a slider measurably changes the processing outcome rather than only toggling stages on/off.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-extend-advancedaudioeditor-to-expose-controls-for-the-missing-requested-dsp-tools-dynamic-eq-and-de-click-de-chirp-in-addition-to-the-existing-noise-suppression-transient-suppression-voice-isolation-spectral-repair-and-tone-shaping-controls",
+      "title": "Extend `AdvancedAudioEditor` to expose controls for the missing requested DSP tools: dynamic EQ and de-click/de-chirp (in addition to the existing noise suppression, transient suppression, voice isolation, spectral repair, and tone shaping controls).",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-replace-ai-deep-learning-marketing-and-stage-copy-in-the-advanced-audio-surfaces-with-accurate-dsp-wording-e-g-rename-ai-engine-references-and-descriptions-in-advancedaudioeditor-tsx-and-progress-stage-labels-emitted-from-audioprocessor-ts-keep-all-user-facing-text-in-english",
+      "title": "Replace AI/deep-learning marketing and stage-copy in the advanced audio surfaces with accurate DSP wording (e.g., rename 'AI Engine' references and descriptions in `AdvancedAudioEditor.tsx` and progress stage labels emitted from `audioProcessor.ts`). Keep all user-facing text in English.",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-video-editing-experience-remains-unchanged-by-the-dsp-upgrade-work-no-behavior-ui-or-job-history-video-comparison-regressions",
+      "title": "Ensure the video editing experience remains unchanged by the DSP upgrade work (no behavior, UI, or job-history video comparison regressions).",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -314,8 +354,8 @@
       "status": "pending"
     },
     {
-      "id": "AR-3",
-      "summary": "Add advanced deep-learning AI audio editing pipeline: heavy noise reduction, transient suppression, voice/source separation, smart spectral repair for speech, multiband (high/mid/low) profiling, cross-platform playback, GPU/CPU real-time acceleration, and automatic error correction during processing",
+      "id": "AR-4",
+      "summary": "Upgrade all browser-based DSP audio tools (stronger noise reduction, transient suppression, voice/dialogue isolation/source separation-style DSP, spectral repair, robust dynamic EQ, improved de-click/de-chirp) while keeping video editing unchanged",
       "reqIds": [],
       "status": "pending"
     }

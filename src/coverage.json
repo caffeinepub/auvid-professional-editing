@@ -1,103 +1,96 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-06T19:02:24.353Z",
+  "generatedAt": "2026-02-09T16:09:08.040Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
-    "implemented": 4,
+    "total": 5,
+    "implemented": 5,
     "items": [
       {
-        "id": "REQ-5",
-        "summary": "Restore the video editing experience to how it was before the recent audio editor changes, ensuring that video editing UI, controls, preview behavior, and job history video comparison functionality are not altered or degraded by audio-related refactors.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/Dashboard.tsx",
-          "frontend/src/components/JobsList.tsx",
-          "frontend/src/components/UnifiedVideoEditor.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/JobsList.tsx",
-          "frontend/src/components/UnifiedVideoEditor.tsx"
-        ]
-      },
-      {
-        "id": "REQ-6",
-        "summary": "Implement an advanced audio editing workflow for audio mode that provides user-controllable processing for: heavy background noise suppression, transient/impulse suppression (banging/clicks/knocks), voice/speech isolation (voice separated from other sounds), spectral repair to mitigate speech distortion artifacts, and high/mid/low (multi-band) tone profiling; include real-time preview playback controls and export/download of the edited audio.",
+        "id": "REQ-10",
+        "summary": "Wire the existing strength controls in `frontend/src/components/AdvancedAudioEditor.tsx` (e.g., `noiseSuppressionStrength`, `transientSuppressionStrength`, `voiceIsolationStrength`, `spectralRepairStrength`) into the DSP pipeline so that changing a slider measurably changes the processing outcome rather than only toggling stages on/off.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/AdvancedAudioEditor.tsx",
-          "frontend/src/components/FileUpload.tsx",
+          "frontend/src/lib/audioProcessor.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/AdvancedAudioEditor.tsx",
+          "frontend/src/lib/audioProcessor.ts"
+        ]
+      },
+      {
+        "id": "REQ-11",
+        "summary": "Extend `AdvancedAudioEditor` to expose controls for the missing requested DSP tools: dynamic EQ and de-click/de-chirp (in addition to the existing noise suppression, transient suppression, voice isolation, spectral repair, and tone shaping controls).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/AdvancedAudioEditor.tsx",
+          "frontend/src/lib/audioProcessor.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/AdvancedAudioEditor.tsx",
+          "frontend/src/lib/audioProcessor.ts"
+        ]
+      },
+      {
+        "id": "REQ-12",
+        "summary": "Replace AI/deep-learning marketing and stage-copy in the advanced audio surfaces with accurate DSP wording (e.g., rename 'AI Engine' references and descriptions in `AdvancedAudioEditor.tsx` and progress stage labels emitted from `audioProcessor.ts`). Keep all user-facing text in English.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/AdvancedAudioEditor.tsx",
           "frontend/src/lib/audioProcessor.ts",
-          "frontend/src/components/AudioABPreviewPlayer.tsx",
-          "frontend/src/components/SpectralFrequencyDisplay.tsx",
-          "frontend/src/components/DualWaveformDisplay.tsx"
+          "frontend/src/App.tsx"
         ],
         "matchedFiles": [
           "frontend/src/components/AdvancedAudioEditor.tsx",
-          "frontend/src/components/FileUpload.tsx",
           "frontend/src/lib/audioProcessor.ts",
-          "frontend/src/components/AudioABPreviewPlayer.tsx",
-          "frontend/src/components/SpectralFrequencyDisplay.tsx",
-          "frontend/src/components/DualWaveformDisplay.tsx"
+          "frontend/src/App.tsx"
         ]
       },
       {
-        "id": "REQ-7",
-        "summary": "Wire the advanced audio editing workflow into the existing upload/job lifecycle so that running audio processing produces a completed job with the processed blob set, and the job’s applied audio flags (e.g., deepNoiseSuppressionApplied, transientReduction, voiceIsolation, spectralRepair, etc.) reflect the user-selected audio enhancements.",
+        "id": "REQ-13",
+        "summary": "Ensure the video editing experience remains unchanged by the DSP upgrade work (no behavior, UI, or job-history video comparison regressions).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/FileUpload.tsx",
-          "frontend/src/components/JobsList.tsx"
+          "frontend/src/docs/video-smoke-test-checklist.md"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/FileUpload.tsx",
-          "frontend/src/components/JobsList.tsx"
+          "frontend/src/docs/video-smoke-test-checklist.md"
         ]
       },
       {
-        "id": "REQ-8",
-        "summary": "Ensure audio playback works reliably across major browsers/platforms by using browser-native audio playback elements for preview (including iOS/Safari constraints) and by avoiding approaches that prevent waveform/spectrum components from attaching to the audio element.",
+        "id": "REQ-9",
+        "summary": "Upgrade the in-browser audio DSP pipeline in `frontend/src/lib/audioProcessor.ts` to provide noticeably stronger results for: noise/background suppression, transient/impulse suppression (clicks/knocks/bangs), voice/dialogue isolation, spectral repair, dynamic EQ, and de-click/de-chirp (all within Web Audio API + OfflineAudioContext constraints; no deep-learning model claims).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/AudioABPreviewPlayer.tsx",
-          "frontend/src/components/AdvancedAudioEditor.tsx",
-          "frontend/src/components/JobsList.tsx"
+          "frontend/src/lib/audioProcessor.ts",
+          "frontend/src/lib/dsp/dspTypes.ts",
+          "frontend/src/lib/dsp/stageBuilders.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/AudioABPreviewPlayer.tsx",
-          "frontend/src/components/AdvancedAudioEditor.tsx",
-          "frontend/src/components/JobsList.tsx"
+          "frontend/src/lib/audioProcessor.ts",
+          "frontend/src/lib/dsp/dspTypes.ts",
+          "frontend/src/lib/dsp/stageBuilders.ts"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
     "build-request.json",
+    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
+    "frontend/src/App.tsx",
     "frontend/src/components/AdvancedAudioEditor.tsx",
-    "frontend/src/components/AudioABPreviewPlayer.tsx",
-    "frontend/src/components/DualWaveformDisplay.tsx",
-    "frontend/src/components/FileUpload.tsx",
-    "frontend/src/components/JobsList.tsx",
-    "frontend/src/components/SpectralFrequencyDisplay.tsx",
-    "frontend/src/components/UnifiedVideoEditor.tsx",
-    "frontend/src/components/VideoComparison.tsx",
-    "frontend/src/components/VideoPreviewManager.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/docs/video-smoke-test-checklist.md",
     "frontend/src/lib/audioProcessor.ts",
+    "frontend/src/lib/dsp/dspTypes.ts",
+    "frontend/src/lib/dsp/stageBuilders.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

@@ -1,98 +1,123 @@
 {
   "kind": "build_request",
-  "title": "Restore prior video editor behavior and add advanced in-browser audio enhancement controls (noise suppression, transient suppression, voice isolation, spectral repair)",
+  "title": "Upgrade all browser-based DSP audio tools (noise suppression, transient control, voice isolation, spectral repair, dynamic EQ, de-click/de-chirp) while leaving video editing unchanged",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-5",
-      "text": "Restore the video editing experience to how it was before the recent audio editor changes, ensuring that video editing UI, controls, preview behavior, and job history video comparison functionality are not altered or degraded by audio-related refactors.",
+      "id": "REQ-9",
+      "text": "Upgrade the in-browser audio DSP pipeline in `frontend/src/lib/audioProcessor.ts` to provide noticeably stronger results for: noise/background suppression, transient/impulse suppression (clicks/knocks/bangs), voice/dialogue isolation, spectral repair, dynamic EQ, and de-click/de-chirp (all within Web Audio API + OfflineAudioContext constraints; no deep-learning model claims).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "recent-messages"
         ],
         "quotes": [
-          "the video editing wasn't suppose to change if the video editing can go back to how it was then"
+          "upgrade all the DSP tools",
+          "yes upgrade the DSP tools leave video editing as is,"
         ]
       },
       "acceptanceCriteria": [
-        "Dashboard > Video Editor tab renders the same video editor UI/interaction model that existed prior to the audio editor changes (no audio-editor UI/copy appearing in video surfaces).",
-        "Video job playback, effect toggles/sliders, and preview rendering continue to function without regressions.",
-        "History tab: expanding a completed video job still shows VideoComparison and VideoPreviewManager, and users can download the processed video.",
-        "No new video-editing behavior changes are introduced as part of implementing audio enhancements."
+        "The audio processing pipeline includes distinct stages covering: noise suppression, transient suppression, voice/dialogue isolation, spectral repair, dynamic EQ, and de-click/de-chirp.",
+        "Each new/updated DSP stage can be enabled/disabled and parameterized by the editor UI (strength and/or relevant parameters).",
+        "All processing runs via browser-native Web Audio (e.g., OfflineAudioContext) and does not claim to implement neural networks, GPU acceleration, or deep learning.",
+        "Processing completes successfully for typical user audio files without throwing runtime errors."
       ]
     },
     {
-      "id": "REQ-6",
-      "text": "Implement an advanced audio editing workflow for audio mode that provides user-controllable processing for: heavy background noise suppression, transient/impulse suppression (banging/clicks/knocks), voice/speech isolation (voice separated from other sounds), spectral repair to mitigate speech distortion artifacts, and high/mid/low (multi-band) tone profiling; include real-time preview playback controls and export/download of the edited audio.",
+      "id": "REQ-10",
+      "text": "Wire the existing strength controls in `frontend/src/components/AdvancedAudioEditor.tsx` (e.g., `noiseSuppressionStrength`, `transientSuppressionStrength`, `voiceIsolationStrength`, `spectralRepairStrength`) into the DSP pipeline so that changing a slider measurably changes the processing outcome rather than only toggling stages on/off.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "recent-messages"
         ],
         "quotes": [
-          "implement a very powerful deep learning audio editing as the brain to operate the audio editing with a heavy duty noise reduction to deep suppress background sounds, a very powerful transient shaping element to remove all loud banging sounds and any impulsive sounds,and a very powerful source separation element to separate voice/speech from all other sounds, the ability to playback across all platforms and a very powerful spectral repair element to repair any distorting of speech"
+          "upgrade all the DSP tools"
         ]
       },
       "acceptanceCriteria": [
-        "Audio mode provides an editor UI with toggles/sliders for (at minimum): Noise Suppression, Transient Suppression, Voice Isolation, Spectral Repair, and a 3-band (Low/Mid/High) tone control.",
-        "Users can play/pause, seek/scrub, and A/B preview original vs edited audio inside the app without needing an AI prompt.",
-        "Users can export/download the edited result as an audio file.",
-        "All user-facing text is in English."
+        "Moving each strength slider (0% -> 100%) produces a clearly different output (audible change) while keeping the feature enabled.",
+        "The strength values are passed as parameters/options into the processing function (not ignored).",
+        "Setting strength to 0% behaves equivalently to disabling that stage (or produces a minimal/no-op effect), and 100% applies the strongest settings supported."
       ]
     },
     {
-      "id": "REQ-7",
-      "text": "Wire the advanced audio editing workflow into the existing upload/job lifecycle so that running audio processing produces a completed job with the processed blob set, and the job’s applied audio flags (e.g., deepNoiseSuppressionApplied, transientReduction, voiceIsolation, spectralRepair, etc.) reflect the user-selected audio enhancements.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "implement a very powerful deep learning audio editing as the brain to operate the audio editing ... for real-time editing"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Starting from Upload (audio mode), a user can apply audio enhancement settings, run processing, and the backend job ends in status=completed with processedFile populated.",
-        "The completed job shown in History reflects the applied audio processing via the existing job boolean fields (e.g., deepNoiseSuppressionApplied/transientReduction/voiceIsolation/spectralRepair) where applicable.",
-        "Downloading a completed audio job downloads the processed (edited) audio blob, not the original, when processing was run.",
-        "Failures in the audio processing pipeline are caught and surfaced to the user as an error state without leaving the UI stuck in a processing state."
-      ]
-    },
-    {
-      "id": "REQ-8",
-      "text": "Ensure audio playback works reliably across major browsers/platforms by using browser-native audio playback elements for preview (including iOS/Safari constraints) and by avoiding approaches that prevent waveform/spectrum components from attaching to the audio element.",
+      "id": "REQ-11",
+      "text": "Extend `AdvancedAudioEditor` to expose controls for the missing requested DSP tools: dynamic EQ and de-click/de-chirp (in addition to the existing noise suppression, transient suppression, voice isolation, spectral repair, and tone shaping controls).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "recent-messages"
         ],
         "quotes": [
-          "the ability to playback across all platforms"
+          "upgrade all the DSP tools"
         ]
       },
       "acceptanceCriteria": [
-        "Audio preview uses an in-DOM <audio> element (or an equivalent approach) so existing visualization components can attach reliably.",
-        "Audio preview controls work in Chrome, Firefox, and Safari (including basic iOS/Safari autoplay restrictions handled via explicit user interaction).",
-        "Waveform/spectrum components initialize successfully when previewing audio from completed jobs."
+        "The editor UI includes clearly labeled controls (English) to enable/disable dynamic EQ and de-click/de-chirp, plus at least one adjustable intensity/strength control for each.",
+        "Running processing with these toggles enabled results in an output different from when they are disabled.",
+        "UI controls follow the existing pattern (Switch + Slider + short description) and remain responsive during processing."
+      ]
+    },
+    {
+      "id": "REQ-12",
+      "text": "Replace AI/deep-learning marketing and stage-copy in the advanced audio surfaces with accurate DSP wording (e.g., rename 'AI Engine' references and descriptions in `AdvancedAudioEditor.tsx` and progress stage labels emitted from `audioProcessor.ts`). Keep all user-facing text in English.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "recent-messages"
+        ],
+        "quotes": [
+          "upgrade all the DSP tools"
+        ]
+      },
+      "acceptanceCriteria": [
+        "`AdvancedAudioEditor.tsx` no longer displays copy such as 'Deep learning-powered', 'AI Enhancement Controls', 'GPU Accelerated', or similar claims; the copy describes DSP processing accurately.",
+        "Progress stage labels emitted by the processing function no longer mention AI (e.g., 'Initializing AI Engine...' becomes a DSP-accurate label).",
+        "All updated user-facing text is English-only and consistent across the editor (header, descriptions, toasts, and stage labels)."
+      ]
+    },
+    {
+      "id": "REQ-13",
+      "text": "Ensure the video editing experience remains unchanged by the DSP upgrade work (no behavior, UI, or job-history video comparison regressions).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "recent-messages"
+        ],
+        "quotes": [
+          "leave video editing as is,"
+        ]
+      },
+      "acceptanceCriteria": [
+        "No code changes are made that alter video editor UI controls, preview behavior, or video job history comparison features.",
+        "Manual smoke test: video upload/edit/history flows behave the same as before the DSP upgrades."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo; only add backend changes consistent with this architecture.",
-    "Do not edit files under frontend immutablePaths (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui).",
-    "No external AI/LLM service integrations (no OpenAI/Anthropic/etc.) and no third-party auth beyond Internet Identity.",
-    "Do not rely on WebSockets or other unsupported real-time server features; keep processing client-side and persist results via existing upload/completeProcessing APIs.",
-    "Use English for all user-facing text."
+    "Do not modify any files under `frontend/src/components/ui` (compose them only).",
+    "Do not edit paths listed in `frontend.immutablePaths` in SYSTEM_CONTEXT.",
+    "Do not introduce or claim deep-learning/neural-network/GPU-accelerated audio models; implement upgrades using browser-native DSP (Web Audio API/OfflineAudioContext).",
+    "Keep video editing functionality unchanged."
   ],
   "nonGoals": [
-    "Implementing true deep-learning model inference, “supreme intelligence,” or guaranteed GPU-accelerated neural processing; the implementation should be limited to feasible in-browser audio processing techniques.",
-    "Adding third-party DSP/ML cloud services for source separation or spectral repair.",
-    "Changing unrelated application theming/layout beyond what is necessary to restore the video editor and add the requested audio controls."
+    "Implementing true deep-learning or GPU-based audio source separation models in-browser.",
+    "Adding new backend canisters, external databases, or external AI services.",
+    "Changing video processing, video editor UI, or video comparison behavior."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

@@ -1,127 +1,115 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Restore video editor surfaces and add advanced in-browser audio enhancement workflow with reliable cross-browser playback",
+  "title": "Upgrade in-browser audio DSP tools (Web Audio/OfflineAudioContext) with new Dynamic EQ + De-click/De-chirp controls, leaving video editing unchanged",
   "requirements": [
     {
-      "id": "REQ-5",
-      "summary": "Restore prior video editor UI/behavior and ensure audio-editor refactors do not affect video editor, preview behavior, or history video comparison.",
+      "id": "REQ-9",
+      "summary": "Upgrade the Web Audio DSP pipeline to include stronger, distinct, parameterized stages for noise suppression, transient suppression, voice/dialogue isolation, spectral repair, dynamic EQ, and de-click/de-chirp (no deep-learning claims).",
       "acceptanceCriteria": [
-        "Dashboard > Video Editor tab renders the same video editor UI/interaction model that existed prior to the audio editor changes (no audio-editor UI/copy appearing in video surfaces).",
-        "Video job playback, effect toggles/sliders, and preview rendering continue to function without regressions.",
-        "History tab: expanding a completed video job still shows VideoComparison and VideoPreviewManager, and users can download the processed video.",
-        "No new video-editing behavior changes are introduced as part of implementing audio enhancements."
+        "The audio processing pipeline includes distinct stages covering: noise suppression, transient suppression, voice/dialogue isolation, spectral repair, dynamic EQ, and de-click/de-chirp.",
+        "Each new/updated DSP stage can be enabled/disabled and parameterized by the editor UI (strength and/or relevant parameters).",
+        "All processing runs via browser-native Web Audio (e.g., OfflineAudioContext) and does not claim to implement neural networks, GPU acceleration, or deep learning.",
+        "Processing completes successfully for typical user audio files without throwing runtime errors."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/Dashboard.tsx",
+          "path": "frontend/src/lib/audioProcessor.ts",
           "operation": "modify",
-          "description": "Audit tab wiring to ensure the Video Editor tab renders only the existing video editor surface (UnifiedVideoEditor) and does not inherit any audio-mode UI, copy, or state from Upload/Audio changes."
+          "description": "Refactor the current AI-marketed processing into a clearly staged DSP pipeline built on OfflineAudioContext. Add explicit stages for noise/background suppression, transient/impulse suppression, voice/dialogue isolation, spectral repair, dynamic EQ, and de-click/de-chirp, each taking configurable parameters (including 0..1 or 0..100 strength mapping) and emitting DSP-accurate progress labels."
         },
         {
-          "path": "frontend/src/components/JobsList.tsx",
-          "operation": "modify",
-          "description": "Verify History rendering for completed video jobs remains intact (VideoComparison + VideoPreviewManager + download behavior), and ensure any audio workflow changes do not alter the video job expansion UI."
+          "path": "frontend/src/lib/dsp/dspTypes.ts",
+          "operation": "create",
+          "description": "Introduce shared TypeScript types for DSP options (stage toggles + stage parameter structures + strength normalization helpers) used by the editor and audioProcessor."
         },
         {
-          "path": "frontend/src/components/UnifiedVideoEditor.tsx",
-          "operation": "modify",
-          "description": "Regression-pass the video editor component to ensure its controls, preview behavior, and effect interactions remain unchanged while other audio components evolve (limit changes to any necessary isolation of shared props/state)."
+          "path": "frontend/src/lib/dsp/stageBuilders.ts",
+          "operation": "create",
+          "description": "Add reusable stage-construction helpers for building Web Audio node chains (e.g., filter banks, gating/compression variants, EQ band builders, transient suppression chain, de-click/de-chirp chain) while keeping all processing browser-native and OfflineAudioContext-compatible."
         }
       ]
     },
     {
-      "id": "REQ-6",
-      "summary": "Add an advanced audio editing workflow (audio mode) with user-controllable noise suppression, transient suppression, voice isolation, spectral repair, 3-band tone profiling, real-time preview (including A/B), and export/download.",
+      "id": "REQ-10",
+      "summary": "Wire existing AdvancedAudioEditor strength sliders into the DSP pipeline so slider movement measurably changes processing (not just toggles).",
       "acceptanceCriteria": [
-        "Audio mode provides an editor UI with toggles/sliders for (at minimum): Noise Suppression, Transient Suppression, Voice Isolation, Spectral Repair, and a 3-band (Low/Mid/High) tone control.",
-        "Users can play/pause, seek/scrub, and A/B preview original vs edited audio inside the app without needing an AI prompt.",
-        "Users can export/download the edited result as an audio file.",
-        "All user-facing text is in English."
+        "Moving each strength slider (0% -> 100%) produces a clearly different output (audible change) while keeping the feature enabled.",
+        "The strength values are passed as parameters/options into the processing function (not ignored).",
+        "Setting strength to 0% behaves equivalently to disabling that stage (or produces a minimal/no-op effect), and 100% applies the strongest settings supported."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/AdvancedAudioEditor.tsx",
-          "operation": "create",
-          "description": "Create an AdvancedAudioEditor component for audio mode that provides toggles/sliders for Noise Suppression, Transient Suppression, Voice Isolation, Spectral Repair, and Low/Mid/High tone controls, plus A/B preview controls and an Export/Download action. Use browser-native audio playback elements for preview; Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/FileUpload.tsx",
           "operation": "modify",
-          "description": "Integrate AdvancedAudioEditor into the existing Upload flow for audio mode (replace/upgrade the current “Basic Audio Editor” UX), keeping video-mode upload and video processing UI unchanged. Ensure user-facing copy remains English-only."
+          "description": "Pass the existing strength values (noiseSuppressionStrength, transientSuppressionStrength, voiceIsolationStrength, spectralRepairStrength) into the audio processing call as explicit DSP stage parameters (not just booleans). Ensure 0% maps to bypass/minimal settings and 100% maps to the strongest safe settings."
         },
         {
           "path": "frontend/src/lib/audioProcessor.ts",
           "operation": "modify",
-          "description": "Refactor/extend in-browser audio processing to support the new user-controlled enhancement knobs (noise suppression, transient suppression, voice isolation, spectral repair, and multi-band tone shaping) and to generate an exportable audio byte output suitable for download and job completion. Remove any reliance on external AI/LLM services; keep processing feasible in-browser."
-        },
-        {
-          "path": "frontend/src/components/AudioABPreviewPlayer.tsx",
-          "operation": "create",
-          "description": "Create a reusable audio preview player that renders an in-DOM <audio> element, supports play/pause/seek/scrub, and allows switching between Original and Edited sources without breaking attached visualizers. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/SpectralFrequencyDisplay.tsx",
-          "operation": "modify",
-          "description": "Update the spectrum visualization component to reliably attach to the preview <audio> element used by the advanced audio editor (avoid approaches that prevent attaching). Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/DualWaveformDisplay.tsx",
-          "operation": "modify",
-          "description": "Update the waveform visualization component to reliably attach to the preview <audio> element used by the advanced audio editor and to support A/B source switching while maintaining initialization stability. Verify the component's usage instructions before implementing."
+          "description": "Update the processing function signature/options to accept per-stage strength/parameter inputs and use them to compute stage settings (e.g., thresholds/Q values/ratios/mix amounts) so output changes continuously with UI slider changes."
         }
       ]
     },
     {
-      "id": "REQ-7",
-      "summary": "Wire advanced audio enhancements into the existing upload/job lifecycle so completed jobs store processed blobs and applied-audio flags match the user-selected enhancements; handle failures without stuck UI.",
+      "id": "REQ-11",
+      "summary": "Extend AdvancedAudioEditor UI to add Dynamic EQ and De-click/De-chirp controls (Switch + Slider + description) and ensure they affect output when enabled.",
       "acceptanceCriteria": [
-        "Starting from Upload (audio mode), a user can apply audio enhancement settings, run processing, and the backend job ends in status=completed with processedFile populated.",
-        "The completed job shown in History reflects the applied audio processing via the existing job boolean fields (e.g., deepNoiseSuppressionApplied/transientReduction/voiceIsolation/spectralRepair) where applicable.",
-        "Downloading a completed audio job downloads the processed (edited) audio blob, not the original, when processing was run.",
-        "Failures in the audio processing pipeline are caught and surfaced to the user as an error state without leaving the UI stuck in a processing state."
+        "The editor UI includes clearly labeled controls (English) to enable/disable dynamic EQ and de-click/de-chirp, plus at least one adjustable intensity/strength control for each.",
+        "Running processing with these toggles enabled results in an output different from when they are disabled.",
+        "UI controls follow the existing pattern (Switch + Slider + short description) and remain responsive during processing."
       ],
       "file_operations": [
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Extend the complete-processing mutation wrapper to accept and forward the advanced audio enhancement flags and related values from the advanced audio workflow so job records reflect user-selected processing. Ensure errors propagate cleanly for UI handling."
-        },
-        {
-          "path": "frontend/src/components/FileUpload.tsx",
-          "operation": "modify",
-          "description": "Update audio-mode processing flow: after upload/start, run in-browser processing using the selected enhancement settings, create a processed ExternalBlob, then call completeProcessing with the processed blob and the corresponding boolean flags. Add robust try/catch + error UI state so failures do not leave the UI stuck in processing."
-        },
-        {
-          "path": "frontend/src/components/JobsList.tsx",
-          "operation": "modify",
-          "description": "Update History audio job details to surface which advanced audio enhancements were applied (using existing job boolean fields) and ensure Download continues to download the processed blob when present."
-        }
-      ]
-    },
-    {
-      "id": "REQ-8",
-      "summary": "Ensure reliable cross-browser audio playback by using a native in-DOM audio element for preview and keeping waveform/spectrum visualizers attachable (including Safari/iOS constraints).",
-      "acceptanceCriteria": [
-        "Audio preview uses an in-DOM <audio> element (or an equivalent approach) so existing visualization components can attach reliably.",
-        "Audio preview controls work in Chrome, Firefox, and Safari (including basic iOS/Safari autoplay restrictions handled via explicit user interaction).",
-        "Waveform/spectrum components initialize successfully when previewing audio from completed jobs."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/AudioABPreviewPlayer.tsx",
-          "operation": "modify",
-          "description": "Ensure the preview player uses an in-DOM <audio> element with explicit user-gesture play initiation for Safari/iOS, and exposes a stable attachment surface for waveform/spectrum components. Verify the component's usage instructions before implementing."
-        },
         {
           "path": "frontend/src/components/AdvancedAudioEditor.tsx",
           "operation": "modify",
-          "description": "Wire the editor’s preview controls through the shared native-audio preview player to guarantee cross-browser behavior and consistent visualizer attachment. Verify the component's usage instructions before implementing."
+          "description": "Add new settings fields and UI sections for Dynamic EQ and De-click/De-chirp following the existing Switch + Slider + short description pattern. Wire these values into the processing call so enabling/disabling and changing strength produces an audible difference."
         },
         {
-          "path": "frontend/src/components/JobsList.tsx",
+          "path": "frontend/src/lib/audioProcessor.ts",
           "operation": "modify",
-          "description": "Ensure completed-job audio preview uses the same native <audio>-based approach (or remains compatible) so waveform/spectrum components initialize reliably across browsers."
+          "description": "Add processing support for Dynamic EQ and De-click/De-chirp stages, including enable/disable behavior and strength-driven parameter mapping that produces a measurable output change."
+        }
+      ]
+    },
+    {
+      "id": "REQ-12",
+      "summary": "Replace AI/deep-learning/GPU marketing copy and progress stage labels with accurate DSP wording (English only) in advanced audio UI and audio processing progress labels.",
+      "acceptanceCriteria": [
+        "`AdvancedAudioEditor.tsx` no longer displays copy such as 'Deep learning-powered', 'AI Enhancement Controls', 'GPU Accelerated', or similar claims; the copy describes DSP processing accurately.",
+        "Progress stage labels emitted by the processing function no longer mention AI (e.g., 'Initializing AI Engine...' becomes a DSP-accurate label).",
+        "All updated user-facing text is English-only and consistent across the editor (header, descriptions, toasts, and stage labels)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/AdvancedAudioEditor.tsx",
+          "operation": "modify",
+          "description": "Replace AI/deep-learning/GPU-acceleration wording with accurate DSP language across titles, descriptions, badges, feature descriptions, button labels, and any toast/progress-related copy while keeping all user-facing text in English."
+        },
+        {
+          "path": "frontend/src/lib/audioProcessor.ts",
+          "operation": "modify",
+          "description": "Update progress stage labels to be DSP-accurate and consistent with the editor UI (e.g., initialization, analysis, noise suppression, transient suppression, voice isolation, spectral repair, dynamic EQ, de-click/de-chirp, normalization, rendering), avoiding any AI wording."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Replace the global initialization/loading text that references 'AI Engine' with neutral, DSP-accurate wording to keep user-facing copy consistent and avoid AI claims."
+        }
+      ]
+    },
+    {
+      "id": "REQ-13",
+      "summary": "Ensure video editing remains unchanged while upgrading audio DSP (no video UI/behavior/job-history comparison regressions).",
+      "acceptanceCriteria": [
+        "No code changes are made that alter video editor UI controls, preview behavior, or video job history comparison features.",
+        "Manual smoke test: video upload/edit/history flows behave the same as before the DSP upgrades."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/docs/video-smoke-test-checklist.md",
+          "operation": "create",
+          "description": "Add a short manual smoke-test checklist focused on verifying the video upload/edit/history/video-comparison flows remain unchanged after the audio DSP upgrades, without modifying any video editor components."
         }
       ]
     }

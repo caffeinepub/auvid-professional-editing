@@ -9,11 +9,10 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { 
   Volume2, Zap, Sparkles, Download, 
-  Play, Pause, SkipBack, SkipForward, Brain, 
-  Cpu, Gauge, CheckCircle2, AlertCircle, Loader2
+  CheckCircle2, AlertCircle, Loader2, Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { processAudioWithAI } from '@/lib/audioProcessor';
+import { processAudioWithDSP } from '@/lib/audioProcessor';
 import AudioABPreviewPlayer from './AudioABPreviewPlayer';
 import SpectralFrequencyDisplay from './SpectralFrequencyDisplay';
 import DualWaveformDisplay from './DualWaveformDisplay';
@@ -33,6 +32,10 @@ interface AudioSettings {
   voiceIsolationStrength: number;
   spectralRepair: boolean;
   spectralRepairStrength: number;
+  dynamicEQ: boolean;
+  dynamicEQStrength: number;
+  deClickDeChirp: boolean;
+  deClickDeChirpStrength: number;
   lowBand: number;
   midBand: number;
   highBand: number;
@@ -52,6 +55,10 @@ export default function AdvancedAudioEditor({
     voiceIsolationStrength: 85,
     spectralRepair: true,
     spectralRepairStrength: 70,
+    dynamicEQ: false,
+    dynamicEQStrength: 50,
+    deClickDeChirp: false,
+    deClickDeChirpStrength: 50,
     lowBand: 0,
     midBand: 0,
     highBand: 0,
@@ -93,26 +100,45 @@ export default function AdvancedAudioEditor({
     try {
       setIsProcessing(true);
       setProcessingProgress(0);
-      setProcessingStage('Initializing AI Engine...');
+      setProcessingStage('Initializing DSP pipeline...');
       setProcessingError(null);
 
       // Read file as array buffer
       const arrayBuffer = await originalFile.arrayBuffer();
       
       // Decode audio
-      setProcessingStage('Decoding Audio...');
+      setProcessingStage('Decoding audio...');
       setProcessingProgress(10);
       
       const audioContext = new AudioContext();
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-      // Process with AI
-      const processedBuffer = await processAudioWithAI(audioBuffer, {
-        deepNoiseSuppression: settings.noiseSuppression,
-        speechEnhancement: settings.voiceIsolation,
-        voiceIsolation: settings.voiceIsolation,
-        transientReduction: settings.transientSuppression,
-        spectralRepair: settings.spectralRepair,
+      // Process with DSP
+      const processedBuffer = await processAudioWithDSP(audioBuffer, {
+        noiseSuppression: {
+          enabled: settings.noiseSuppression,
+          strength: settings.noiseSuppressionStrength,
+        },
+        transientSuppression: {
+          enabled: settings.transientSuppression,
+          strength: settings.transientSuppressionStrength,
+        },
+        voiceIsolation: {
+          enabled: settings.voiceIsolation,
+          strength: settings.voiceIsolationStrength,
+        },
+        spectralRepair: {
+          enabled: settings.spectralRepair,
+          strength: settings.spectralRepairStrength,
+        },
+        dynamicEQ: {
+          enabled: settings.dynamicEQ,
+          strength: settings.dynamicEQStrength,
+        },
+        deClickDeChirp: {
+          enabled: settings.deClickDeChirp,
+          strength: settings.deClickDeChirpStrength,
+        },
         lowBandAdjustment: settings.lowBand,
         midBandAdjustment: settings.midBand,
         highBandAdjustment: settings.highBand,
@@ -123,7 +149,7 @@ export default function AdvancedAudioEditor({
       });
 
       // Convert to blob
-      setProcessingStage('Encoding Audio...');
+      setProcessingStage('Encoding audio...');
       setProcessingProgress(95);
 
       const blob = await audioBufferToBlob(processedBuffer);
@@ -132,7 +158,7 @@ export default function AdvancedAudioEditor({
       setProcessedBlob(blob);
       setProcessedAudioUrl(url);
       setProcessingProgress(100);
-      setProcessingStage('Complete!');
+      setProcessingStage('Processing complete');
       setShowComparison(true);
 
       toast.success('Audio processing complete! Use A/B comparison to hear the difference.');
@@ -218,6 +244,8 @@ export default function AdvancedAudioEditor({
     settings.transientSuppression ? 'Transient Suppression' : null,
     settings.voiceIsolation ? 'Voice Isolation' : null,
     settings.spectralRepair ? 'Spectral Repair' : null,
+    settings.dynamicEQ ? 'Dynamic EQ' : null,
+    settings.deClickDeChirp ? 'De-click/De-chirp' : null,
   ].filter((f): f is string => f !== null);
 
   return (
@@ -228,21 +256,17 @@ export default function AdvancedAudioEditor({
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <Brain className="h-6 w-6 text-primary" />
-                Advanced Audio Enhancement Engine
+                <Settings className="h-6 w-6 text-primary" />
+                Advanced Audio DSP Engine
               </CardTitle>
               <CardDescription>
-                Deep learning-powered audio processing with real-time GPU/CPU acceleration
+                Professional-grade digital signal processing for audio enhancement
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="flex items-center gap-1">
-                <Cpu className="h-3 w-3" />
-                GPU Accelerated
-              </Badge>
-              <Badge variant="outline" className="flex items-center gap-1">
-                <Gauge className="h-3 w-3" />
-                Real-time
+                <Sparkles className="h-3 w-3" />
+                Web Audio API
               </Badge>
             </div>
           </div>
@@ -253,11 +277,11 @@ export default function AdvancedAudioEditor({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
-            AI Enhancement Controls
+            <Zap className="h-5 w-5" />
+            DSP Enhancement Controls
           </CardTitle>
           <CardDescription>
-            Configure deep learning models for optimal audio quality
+            Configure processing stages for optimal audio quality
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -271,7 +295,7 @@ export default function AdvancedAudioEditor({
                     setSettings({ ...settings, noiseSuppression: checked })
                   }
                 />
-                <Label className="font-semibold">Heavy Duty Noise Suppression</Label>
+                <Label className="font-semibold">Background Noise Suppression</Label>
               </div>
               <Badge variant={settings.noiseSuppression ? 'default' : 'secondary'}>
                 {settings.noiseSuppression ? 'Active' : 'Inactive'}
@@ -294,7 +318,7 @@ export default function AdvancedAudioEditor({
                   className="w-full"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Deep suppresses background sounds using multi-level AI filtering
+                  Multi-stage filtering to reduce background noise and hum
                 </p>
               </div>
             )}
@@ -312,7 +336,7 @@ export default function AdvancedAudioEditor({
                     setSettings({ ...settings, transientSuppression: checked })
                   }
                 />
-                <Label className="font-semibold">Transient Shaping</Label>
+                <Label className="font-semibold">Transient Suppression</Label>
               </div>
               <Badge variant={settings.transientSuppression ? 'default' : 'secondary'}>
                 {settings.transientSuppression ? 'Active' : 'Inactive'}
@@ -335,7 +359,7 @@ export default function AdvancedAudioEditor({
                   className="w-full"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Removes loud banging sounds and impulsive noises
+                  Fast-attack compression to reduce impulsive sounds and clicks
                 </p>
               </div>
             )}
@@ -353,7 +377,7 @@ export default function AdvancedAudioEditor({
                     setSettings({ ...settings, voiceIsolation: checked })
                   }
                 />
-                <Label className="font-semibold">Source Separation (Voice Isolation)</Label>
+                <Label className="font-semibold">Voice/Dialogue Isolation</Label>
               </div>
               <Badge variant={settings.voiceIsolation ? 'default' : 'secondary'}>
                 {settings.voiceIsolation ? 'Active' : 'Inactive'}
@@ -376,7 +400,7 @@ export default function AdvancedAudioEditor({
                   className="w-full"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Separates voice/speech from all other sounds using AI
+                  Frequency-domain filtering to isolate speech from other sounds
                 </p>
               </div>
             )}
@@ -417,7 +441,89 @@ export default function AdvancedAudioEditor({
                   className="w-full"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Repairs distortion and artifacts in speech using AI
+                  De-essing and harmonic enhancement to reduce distortion
+                </p>
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Dynamic EQ */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={settings.dynamicEQ}
+                  onCheckedChange={(checked) =>
+                    setSettings({ ...settings, dynamicEQ: checked })
+                  }
+                />
+                <Label className="font-semibold">Dynamic EQ</Label>
+              </div>
+              <Badge variant={settings.dynamicEQ ? 'default' : 'secondary'}>
+                {settings.dynamicEQ ? 'Active' : 'Inactive'}
+              </Badge>
+            </div>
+            {settings.dynamicEQ && (
+              <div className="space-y-2 pl-10">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">EQ Strength</span>
+                  <span className="font-medium">{settings.dynamicEQStrength}%</span>
+                </div>
+                <Slider
+                  value={[settings.dynamicEQStrength]}
+                  onValueChange={([value]) =>
+                    setSettings({ ...settings, dynamicEQStrength: value })
+                  }
+                  min={0}
+                  max={100}
+                  step={5}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Frequency-dependent compression to control problem frequencies
+                </p>
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* De-click/De-chirp */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={settings.deClickDeChirp}
+                  onCheckedChange={(checked) =>
+                    setSettings({ ...settings, deClickDeChirp: checked })
+                  }
+                />
+                <Label className="font-semibold">De-click / De-chirp</Label>
+              </div>
+              <Badge variant={settings.deClickDeChirp ? 'default' : 'secondary'}>
+                {settings.deClickDeChirp ? 'Active' : 'Inactive'}
+              </Badge>
+            </div>
+            {settings.deClickDeChirp && (
+              <div className="space-y-2 pl-10">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Removal Strength</span>
+                  <span className="font-medium">{settings.deClickDeChirpStrength}%</span>
+                </div>
+                <Slider
+                  value={[settings.deClickDeChirpStrength]}
+                  onValueChange={([value]) =>
+                    setSettings({ ...settings, deClickDeChirpStrength: value })
+                  }
+                  min={0}
+                  max={100}
+                  step={5}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Ultra-fast limiting to remove clicks, pops, and chirps
                 </p>
               </div>
             )}
@@ -493,7 +599,7 @@ export default function AdvancedAudioEditor({
               ) : (
                 <>
                   <Zap className="h-5 w-5 mr-2" />
-                  Process Audio with AI
+                  Process Audio
                 </>
               )}
             </Button>
@@ -541,24 +647,27 @@ export default function AdvancedAudioEditor({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <AudioABPreviewPlayer
-              originalUrl={originalAudioUrl}
-              editedUrl={processedAudioUrl}
-              onAudioElementReady={(element) => {
-                audioElementRef.current = element;
-              }}
-            />
+            {/* Audio Player */}
+            {originalAudioUrl && (
+              <AudioABPreviewPlayer
+                originalUrl={originalAudioUrl}
+                editedUrl={processedAudioUrl}
+                onAudioElementReady={(element) => {
+                  audioElementRef.current = element;
+                }}
+              />
+            )}
 
             {/* Visualizations */}
             {audioElementRef.current && (
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Spectral Frequency Analysis</Label>
+                <div className="rounded-lg border bg-card p-4">
+                  <h4 className="text-sm font-medium mb-3">Frequency Spectrum</h4>
                   <SpectralFrequencyDisplay audioElement={audioElementRef.current} />
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Waveform Display</Label>
+                <div className="rounded-lg border bg-card p-4">
+                  <h4 className="text-sm font-medium mb-3">Waveform</h4>
                   <DualWaveformDisplay audioElement={audioElementRef.current} />
                 </div>
               </div>
@@ -568,9 +677,9 @@ export default function AdvancedAudioEditor({
             {processedBlob && (
               <Button
                 onClick={handleExport}
-                variant="default"
-                size="lg"
                 className="w-full"
+                size="lg"
+                variant="outline"
               >
                 <Download className="h-5 w-5 mr-2" />
                 Export Processed Audio
