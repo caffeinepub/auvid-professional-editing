@@ -1,115 +1,110 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Upgrade in-browser audio DSP tools (Web Audio/OfflineAudioContext) with new Dynamic EQ + De-click/De-chirp controls, leaving video editing unchanged",
+  "title": "Triple Check in-browser audio diagnostics and pipeline hardening",
   "requirements": [
     {
-      "id": "REQ-9",
-      "summary": "Upgrade the Web Audio DSP pipeline to include stronger, distinct, parameterized stages for noise suppression, transient suppression, voice/dialogue isolation, spectral repair, dynamic EQ, and de-click/de-chirp (no deep-learning claims).",
+      "id": "REQ-1",
+      "summary": "Add a Triple Check diagnostics run that compares decoded input, an early pipeline checkpoint, and final processed/encoded output and surfaces metrics, source-stage highlighting, auditioning, and report export in the UI.",
       "acceptanceCriteria": [
-        "The audio processing pipeline includes distinct stages covering: noise suppression, transient suppression, voice/dialogue isolation, spectral repair, dynamic EQ, and de-click/de-chirp.",
-        "Each new/updated DSP stage can be enabled/disabled and parameterized by the editor UI (strength and/or relevant parameters).",
-        "All processing runs via browser-native Web Audio (e.g., OfflineAudioContext) and does not claim to implement neural networks, GPU acceleration, or deep learning.",
-        "Processing completes successfully for typical user audio files without throwing runtime errors."
+        "User can run a Triple Check from the audio processing UI and it completes without crashing for a supported audio file.",
+        "Triple Check produces three checkpoints that correspond to: decoded input, an intermediate processed stage, and final processed stage.",
+        "UI displays a clear per-checkpoint summary including sample rate, channel count, duration, peak level, RMS level, DC offset estimate, NaN/Infinity sample count, and an estimated clipping count.",
+        "UI highlights which checkpoint first introduces abnormal values (e.g., clipping spikes, NaNs, extreme DC offset) and labels that checkpoint as the likely source stage.",
+        "User can audition each checkpoint audio (e.g., via selectable playback) to confirm where static begins.",
+        "User can download a diagnostic report (JSON or text) containing metrics and selected processing settings used during the run."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/lib/tripleCheckDiagnostics.ts",
+          "operation": "create",
+          "description": "Implement the in-browser Triple Check runner that (a) decodes the input, (b) requests checkpoint rendering from the DSP layer, (c) encodes/decodes the final output to isolate encode-step artifacts, (d) computes per-checkpoint metrics (sample rate, channels, duration, peak, RMS, DC offset estimate, NaN/Infinity count, clipping estimate), and (e) produces a JSON-serializable diagnostic report for UI export."
+        },
+        {
+          "path": "frontend/src/lib/audioMetrics.ts",
+          "operation": "create",
+          "description": "Add reusable audio analysis utilities to compute numeric metrics from an AudioBuffer/Float32Array, including peak/RMS, DC offset estimate, NaN/Infinity counts, and an estimated clipping count used by Triple Check summaries and warnings."
+        },
+        {
+          "path": "frontend/src/components/TripleCheckResults.tsx",
+          "operation": "create",
+          "description": "Create a UI component that renders the three-checkpoint results (table/cards), highlights the first abnormal checkpoint as the likely source stage, provides checkpoint selection for auditioning, and exposes a Download Report action. Compose existing shadcn/ui components (do not modify anything under frontend/src/components/ui). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/AdvancedAudioEditor.tsx",
+          "operation": "modify",
+          "description": "Wire a Triple Check action into the Advanced Audio Editor: invoke the Triple Check runner with the user's current DSP settings, render results via the TripleCheckResults component, provide checkpoint auditioning using locally generated object URLs, and enable report download (local-only) without uploading anything to the backend. Compose existing shadcn/ui components (do not modify anything under frontend/src/components/ui). Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Add deterministic checkpoint rendering support to the in-browser DSP processor so diagnostics can inspect multiple stages without changing user DSP settings and without affecting normal processing behavior.",
+      "acceptanceCriteria": [
+        "The DSP processing layer (currently `processAudioWithDSP` in `frontend/src/lib/audioProcessor.ts`) supports running with checkpoints (e.g., returns intermediate AudioBuffers or renders stage-by-stage) while still returning the final AudioBuffer.",
+        "Checkpoint rendering is deterministic for the same input and settings (no random noise added).",
+        "Checkpoint rendering does not regress the existing non-diagnostic processing path (normal processing still returns only the final result when diagnostics are not enabled)."
       ],
       "file_operations": [
         {
           "path": "frontend/src/lib/audioProcessor.ts",
           "operation": "modify",
-          "description": "Refactor the current AI-marketed processing into a clearly staged DSP pipeline built on OfflineAudioContext. Add explicit stages for noise/background suppression, transient/impulse suppression, voice/dialogue isolation, spectral repair, dynamic EQ, and de-click/de-chirp, each taking configurable parameters (including 0..1 or 0..100 strength mapping) and emitting DSP-accurate progress labels."
+          "description": "Extend processAudioWithDSP with an optional diagnostics/checkpoints mode that can render and return intermediate AudioBuffers for selected stages (e.g., decoded input passthrough, early pipeline, final pipeline) while preserving the existing default behavior (return only the final AudioBuffer when diagnostics are not enabled). Ensure the implementation remains deterministic for identical input and settings."
         },
         {
           "path": "frontend/src/lib/dsp/dspTypes.ts",
-          "operation": "create",
-          "description": "Introduce shared TypeScript types for DSP options (stage toggles + stage parameter structures + strength normalization helpers) used by the editor and audioProcessor."
-        },
-        {
-          "path": "frontend/src/lib/dsp/stageBuilders.ts",
-          "operation": "create",
-          "description": "Add reusable stage-construction helpers for building Web Audio node chains (e.g., filter banks, gating/compression variants, EQ band builders, transient suppression chain, de-click/de-chirp chain) while keeping all processing browser-native and OfflineAudioContext-compatible."
+          "operation": "modify",
+          "description": "Add minimal type support for DSP diagnostics/checkpoint configuration and return types (e.g., optional diagnostics options and a structured return for checkpoints) while keeping the existing options compatible for normal processing."
         }
       ]
     },
     {
-      "id": "REQ-10",
-      "summary": "Wire existing AdvancedAudioEditor strength sliders into the DSP pipeline so slider movement measurably changes processing (not just toggles).",
+      "id": "REQ-3",
+      "summary": "Harden the decode → DSP → encode path to prevent static/artifacts by adding audio-safety validations, NaN/Infinity sanitization, safe int16 conversion, robust AudioContext cleanup, and clear UI warnings when abnormal values are detected.",
       "acceptanceCriteria": [
-        "Moving each strength slider (0% -> 100%) produces a clearly different output (audible change) while keeping the feature enabled.",
-        "The strength values are passed as parameters/options into the processing function (not ignored).",
-        "Setting strength to 0% behaves equivalently to disabling that stage (or produces a minimal/no-op effect), and 100% applies the strongest settings supported."
+        "Audio processing always closes any created `AudioContext` even if decode, DSP, or encode throws (no leaked contexts).",
+        "WAV encoding clamps and sanitizes samples to prevent NaN/Infinity propagation into the output file (NaNs/Infs become 0 and are counted in diagnostics).",
+        "WAV encoding uses safe int16 conversion (including rounding) and does not write out-of-range values.",
+        "If the processed buffer contains abnormal values (NaN/Infinity, excessive clipping), the UI surfaces a clear error/warning message in English and recommends lowering DSP strengths or disabling the stage flagged by diagnostics.",
+        "After the fix, running processing on a typical audio file no longer introduces new constant static that was not present in the decoded input (verified by diagnostics: clipping/NaN counts do not spike only at the final encode step)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/lib/wavEncoder.ts",
+          "operation": "create",
+          "description": "Centralize WAV encoding into a hardened utility that sanitizes NaN/Infinity samples (set to 0 and count), clamps to [-1, 1], converts to int16 using safe rounding, and returns both the Blob and encoding diagnostics (e.g., sanitized sample count, clipped sample count)."
+        },
+        {
+          "path": "frontend/src/components/AdvancedAudioEditor.tsx",
+          "operation": "modify",
+          "description": "Refactor the processing flow to ensure any created AudioContext is closed in a finally block (even on decode/DSP/encode errors), switch encoding to use the hardened wavEncoder utility, and surface clear English warnings/errors when abnormal values are detected (including suggestions to lower DSP strengths or disable the stage flagged by diagnostics when available)."
+        },
+        {
+          "path": "frontend/src/lib/tripleCheckDiagnostics.ts",
+          "operation": "modify",
+          "description": "Incorporate encoding-step validation into the Triple Check run by using the hardened WAV encoder and (optionally) decoding the encoded WAV back into an AudioBuffer for metric comparison to isolate encode-related artifacts."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Expose a user-facing Diagnostics section in the Advanced Audio Editor to run Triple Check, view results, and export the report locally without backend changes.",
+      "acceptanceCriteria": [
+        "Advanced Audio Editor includes a Diagnostics UI section that is discoverable and does not block normal processing.",
+        "Diagnostics section includes: a button to run Triple Check, a results table/card list for the three checkpoints, and a button to download the report.",
+        "All user-facing diagnostics labels and messages are in English.",
+        "Diagnostics run does not automatically upload anything to the backend; it is local-only unless the user explicitly uploads/export via existing flows."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/AdvancedAudioEditor.tsx",
           "operation": "modify",
-          "description": "Pass the existing strength values (noiseSuppressionStrength, transientSuppressionStrength, voiceIsolationStrength, spectralRepairStrength) into the audio processing call as explicit DSP stage parameters (not just booleans). Ensure 0% maps to bypass/minimal settings and 100% maps to the strongest safe settings."
+          "description": "Add a dedicated Diagnostics section to the Advanced Audio Editor UI that (a) provides a Run Triple Check button, (b) displays results via the TripleCheckResults component, and (c) enables local report download; ensure this section is discoverable and does not block the normal processing/export flows. Compose existing shadcn/ui components (do not modify anything under frontend/src/components/ui). Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/lib/audioProcessor.ts",
+          "path": "frontend/src/components/TripleCheckResults.tsx",
           "operation": "modify",
-          "description": "Update the processing function signature/options to accept per-stage strength/parameter inputs and use them to compute stage settings (e.g., thresholds/Q values/ratios/mix amounts) so output changes continuously with UI slider changes."
-        }
-      ]
-    },
-    {
-      "id": "REQ-11",
-      "summary": "Extend AdvancedAudioEditor UI to add Dynamic EQ and De-click/De-chirp controls (Switch + Slider + description) and ensure they affect output when enabled.",
-      "acceptanceCriteria": [
-        "The editor UI includes clearly labeled controls (English) to enable/disable dynamic EQ and de-click/de-chirp, plus at least one adjustable intensity/strength control for each.",
-        "Running processing with these toggles enabled results in an output different from when they are disabled.",
-        "UI controls follow the existing pattern (Switch + Slider + short description) and remain responsive during processing."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/AdvancedAudioEditor.tsx",
-          "operation": "modify",
-          "description": "Add new settings fields and UI sections for Dynamic EQ and De-click/De-chirp following the existing Switch + Slider + short description pattern. Wire these values into the processing call so enabling/disabling and changing strength produces an audible difference."
-        },
-        {
-          "path": "frontend/src/lib/audioProcessor.ts",
-          "operation": "modify",
-          "description": "Add processing support for Dynamic EQ and De-click/De-chirp stages, including enable/disable behavior and strength-driven parameter mapping that produces a measurable output change."
-        }
-      ]
-    },
-    {
-      "id": "REQ-12",
-      "summary": "Replace AI/deep-learning/GPU marketing copy and progress stage labels with accurate DSP wording (English only) in advanced audio UI and audio processing progress labels.",
-      "acceptanceCriteria": [
-        "`AdvancedAudioEditor.tsx` no longer displays copy such as 'Deep learning-powered', 'AI Enhancement Controls', 'GPU Accelerated', or similar claims; the copy describes DSP processing accurately.",
-        "Progress stage labels emitted by the processing function no longer mention AI (e.g., 'Initializing AI Engine...' becomes a DSP-accurate label).",
-        "All updated user-facing text is English-only and consistent across the editor (header, descriptions, toasts, and stage labels)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/AdvancedAudioEditor.tsx",
-          "operation": "modify",
-          "description": "Replace AI/deep-learning/GPU-acceleration wording with accurate DSP language across titles, descriptions, badges, feature descriptions, button labels, and any toast/progress-related copy while keeping all user-facing text in English."
-        },
-        {
-          "path": "frontend/src/lib/audioProcessor.ts",
-          "operation": "modify",
-          "description": "Update progress stage labels to be DSP-accurate and consistent with the editor UI (e.g., initialization, analysis, noise suppression, transient suppression, voice isolation, spectral repair, dynamic EQ, de-click/de-chirp, normalization, rendering), avoiding any AI wording."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Replace the global initialization/loading text that references 'AI Engine' with neutral, DSP-accurate wording to keep user-facing copy consistent and avoid AI claims."
-        }
-      ]
-    },
-    {
-      "id": "REQ-13",
-      "summary": "Ensure video editing remains unchanged while upgrading audio DSP (no video UI/behavior/job-history comparison regressions).",
-      "acceptanceCriteria": [
-        "No code changes are made that alter video editor UI controls, preview behavior, or video job history comparison features.",
-        "Manual smoke test: video upload/edit/history flows behave the same as before the DSP upgrades."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/docs/video-smoke-test-checklist.md",
-          "operation": "create",
-          "description": "Add a short manual smoke-test checklist focused on verifying the video upload/edit/history/video-comparison flows remain unchanged after the audio DSP upgrades, without modifying any video editor components."
+          "description": "Ensure the diagnostics UI uses English labels/messages, supports exporting the report as JSON/text, and keeps all data local (no backend calls) unless the user explicitly uses existing export/upload flows. Compose existing shadcn/ui components (do not modify anything under frontend/src/components/ui). Verify the component's usage instructions before implementing."
         }
       ]
     }

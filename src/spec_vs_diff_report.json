@@ -1,51 +1,73 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-09T16:09:08.037Z",
-  "summary": "Diff adds a new DSP type/options module and stage builder utilities, and updates the audio processor to a multi-stage OfflineAudioContext pipeline with configurable stages (including dynamic EQ and de-click/de-chirp) and DSP-accurate progress labels. AdvancedAudioEditor gains new settings fields for dynamic EQ and de-click/de-chirp and begins wiring strength values into processAudioWithDSP, but the provided diff is truncated before confirming all UI controls and full parameter/progress wiring. No direct video-editor code changes are shown, but a new video smoke-test checklist doc is added and App.tsx is modified for app initialization UI.",
+  "generatedAt": "2026-02-10T07:24:06.593Z",
+  "summary": "Diff adds a frontend Triple Check diagnostics runner (metrics + audition + report export) and a hardened WAV encoder with sanitization/clamping. However, DSP “checkpoint support” is implemented as a single diagnosticsMode flag that skips DSP stages rather than returning true intermediate checkpoints without changing user settings. AudioContext cleanup is not clearly exception-safe. Backend changes (migration + main.mo edits) appear added despite the request to keep diagnostics local-only and avoid backend changes unless strictly required.",
   "missing_requirements": [
     {
-      "id": "REQ-10",
-      "requirement": "Wire the existing strength controls in AdvancedAudioEditor into the DSP pipeline so slider changes measurably change processing outcome (strength passed as parameters; 0% ~ disable; 100% strongest).",
-      "reason": "The diff shows settings fields and the start of passing options into processAudioWithDSP, but the AdvancedAudioEditor.tsx snippet is truncated before confirming that all strength sliders (noise/transient/voice/spectral) are fully passed through, that onProgress is wired, and that 0% strength is handled equivalently to disabling from the UI side.",
+      "id": "REQ-2",
+      "requirement": "Add pipeline checkpoint support so the DSP processor can render/return multiple stages (decoded input, intermediate stage, final stage) without changing the user’s chosen DSP settings, while preserving the normal non-diagnostic path.",
+      "reason": "The diff adds `diagnosticsMode?: boolean` and uses it to skip DSP stages, but does not show `processAudioWithDSP` returning intermediate AudioBuffers/checkpoints. The Triple Check runner also creates the “early pipeline” result by overriding settings (disabling stages + enabling diagnosticsMode), which changes the user’s chosen DSP settings rather than instrumenting the same run.",
       "evidence": [
-        "frontend/src/components/AdvancedAudioEditor.tsx (truncated)"
+        "frontend/src/lib/dsp/dspTypes.ts",
+        "frontend/src/lib/audioProcessor.ts",
+        "frontend/src/lib/tripleCheckDiagnostics.ts"
       ]
     },
     {
-      "id": "REQ-11",
-      "requirement": "Extend AdvancedAudioEditor to expose controls for dynamic EQ and de-click/de-chirp (enable/disable + at least one intensity control each) following existing Switch + Slider + description pattern.",
-      "reason": "State includes dynamicEQ/deClickDeChirp toggles and strength values, but the diff content is truncated before showing the actual rendered UI controls (Switch/Slider/labels/descriptions) for these new tools.",
+      "id": "REQ-3",
+      "requirement": "Ensure audio processing always closes any created AudioContext even if decode/DSP/encode throws (no leaked contexts).",
+      "reason": "`runTripleCheck` creates an `AudioContext` and closes it only after all three checkpoints succeed; it is not shown being closed in a `finally` block. If decode or later steps throw before the `close()`, the context may leak.",
       "evidence": [
-        "frontend/src/components/AdvancedAudioEditor.tsx (truncated)"
+        "frontend/src/lib/tripleCheckDiagnostics.ts"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "If the processed buffer contains abnormal values (NaN/Infinity, excessive clipping), the UI surfaces a clear error/warning message in English and recommends lowering DSP strengths or disabling the stage flagged by diagnostics.",
+      "reason": "While `TripleCheckResults` shows an 'Issues Detected' alert and highlights a source stage, the diff summary does not show any explicit UI guidance/recommendation text to lower DSP strengths or disable a flagged stage when abnormal values are detected in the processed output.",
+      "evidence": [
+        "frontend/src/components/TripleCheckResults.tsx"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Expose a user-facing Diagnostics section in Advanced Audio Editor with a button to run Triple Check, a results view for the three checkpoints, and a button to download the report.",
+      "reason": "AdvancedAudioEditor imports Triple Check utilities and adds state for diagnostics, but the provided diff snippet is truncated before showing the actual Diagnostics section UI (button/table/report export controls).",
+      "evidence": [
+        "frontend/src/components/AdvancedAudioEditor.tsx"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Changed global app initialization/loading screen UI and copy in App.tsx.",
-      "reason": "BuildRequest focuses on upgrading audio DSP tools and keeping video editing unchanged; changes to App.tsx initialization UI are not requested by any listed requirement.",
+      "description": "Backend migration module and added backend types related to TripleCheckAnalysisResult / audio buffers, despite requirement to keep diagnostics frontend-only and add backend changes only if strictly required.",
+      "reason": "BuildRequest explicitly states diagnostics should run in-browser and backend changes should be avoided unless strictly required; the diff adds `backend/migration.mo` and modifies `backend/main.mo` to include migration and many unrelated types/fields.",
       "evidence": [
-        "frontend/src/App.tsx"
+        "backend/migration.mo",
+        "backend/main.mo"
       ]
     },
     {
-      "description": "Added a standalone video editing smoke test checklist document.",
-      "reason": "REQ-13 requires video editing remain unchanged and suggests a manual smoke test, but does not request adding new documentation files; this is an extra deliverable beyond the specified code requirements.",
+      "description": "Loading `lamejs` via CDN in the frontend HTML entry point.",
+      "reason": "The BuildRequest does not request MP3 encoding changes or adding external CDN-loaded libraries; this is an additional capability outside the stated diagnostic/fix scope.",
       "evidence": [
-        "frontend/src/docs/video-smoke-test-checklist.md"
+        "frontend-file-summaries.txt (mentions: \"frontend/index.html\": loads lamejs library via CDN)"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.72,
   "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
     "frontend/src/components/AdvancedAudioEditor.tsx",
-    "frontend/src/docs/video-smoke-test-checklist.md",
+    "frontend/src/components/TripleCheckResults.tsx",
+    "frontend/src/lib/audioMetrics.ts",
     "frontend/src/lib/audioProcessor.ts",
     "frontend/src/lib/dsp/dspTypes.ts",
-    "frontend/src/lib/dsp/stageBuilders.ts",
+    "frontend/src/lib/tripleCheckDiagnostics.ts",
+    "frontend/src/lib/wavEncoder.ts",
     "project_state.json"
   ]
 }

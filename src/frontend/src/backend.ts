@@ -89,15 +89,159 @@ export class ExternalBlob {
         return this;
     }
 }
+export interface UserProfile {
+    name: string;
+}
+export interface DspBuffer {
+    processedSamples: Array<number>;
+}
+export interface MediaFile {
+    contentType: string;
+    size: bigint;
+    filename: string;
+    uploadTime: Time;
+}
+export type Time = bigint;
+export interface BodyModificationDetails {
+    bodyShapeAdjusted: boolean;
+    complexionAnalysisDone: boolean;
+    sizeAdjusted: boolean;
+    frameTransitionSmoothed: boolean;
+    skinToneMatched: boolean;
+    proportionsMaintained: boolean;
+    inkColorCorrected: boolean;
+    personalizedEnhancement: boolean;
+    tattooAreasDetected: boolean;
+    adaptiveFilteringApplied: boolean;
+    blemishCorrectionDone: boolean;
+}
 export interface _CaffeineStorageRefillInformation {
     proposed_top_up_amount?: bigint;
+}
+export interface SpectralData {
+    frequencyBins: Array<bigint>;
+    duration: number;
+    frequencyCrossoverPoints: Array<bigint>;
+    timestamp: Time;
+    intensityValues: Array<number>;
 }
 export interface _CaffeineStorageCreateCertificateResult {
     method: string;
     blob_hash: string;
 }
-export interface UserProfile {
-    name: string;
+export interface VideoComparisonData {
+    activeLayerStack: Array<string>;
+    jobId: string;
+    editedVideoUrl: string;
+    lastModified: Time;
+    originalVideoUrl: string;
+    previewGenerated: boolean;
+}
+export interface DecodedAudio {
+    samples: Array<number>;
+}
+export interface TripleCheckAnalysisResult {
+    decodedInput: DecodedAudio;
+    earlyPipelineOutput: DspBuffer;
+    noiseDifferences: Array<number>;
+    finalEncodedOutput: EncodedAudio;
+}
+export interface VideoComparisonConfig {
+    active: boolean;
+    owner: Principal;
+    defaultFilters: Array<string>;
+    lastConfigUpdate: Time;
+    synchronizedPlayback: boolean;
+    sideBySideEnabled: boolean;
+    intensityLevel: number;
+}
+export interface ProcessingJob {
+    outputFormat: string;
+    aiSelectedEqCurveOptimization: boolean;
+    startTime: Time;
+    status: ProcessingStatus;
+    denoisingStrength: bigint;
+    tripleCheckAnalysisResult?: TripleCheckAnalysisResult;
+    aiPromptText: string;
+    dynamicRangeCompression: boolean;
+    transientReduction: boolean;
+    originalFile: ExternalBlob;
+    upscalingStrength: bigint;
+    dialogueOnlyTrack?: ExternalBlob;
+    skinEnhancementApplied: boolean;
+    endTime?: Time;
+    aiSelectedVoiceClarityEnhancement: boolean;
+    enhancedResolution?: string;
+    renderingOptimized: boolean;
+    speechEnhancementApplied: boolean;
+    aiSelectedFrequencyResponseAdjustment: boolean;
+    fullAudioTrack?: ExternalBlob;
+    phaseAlignmentPreserved: boolean;
+    tattooMaskingStrength: bigint;
+    deepNoiseSuppressionApplied: boolean;
+    skinToneAnalysisApplied: boolean;
+    aiSelectedFrequencyTargeting: boolean;
+    spectralRepair: boolean;
+    aiSelectedNormalization: boolean;
+    professionalGradeDenoising: boolean;
+    mode: Mode;
+    user: Principal;
+    jobId: string;
+    aiSelectedPhaseAwareMasking: boolean;
+    aiSelectedAdaptiveFiltering: boolean;
+    aiSelectedPrePostGainControl: boolean;
+    aiSelectedPhaseAlignment: boolean;
+    adaptiveFiltering: boolean;
+    lowLightEnhancementStrength: bigint;
+    frameMappingCompleted: boolean;
+    frequencyTargeting: boolean;
+    aiSelectedVoiceIsolation: boolean;
+    videoUpscalingApplied: boolean;
+    bodyEditingStrength: bigint;
+    effectProvider: string;
+    processingTimeAfterUpload?: bigint;
+    aiSelectedDynamicRangeCompression: boolean;
+    videoComparisonData?: VideoComparisonData;
+    statusRelevantForUser: boolean;
+    audioVideoSynchronizationMaintained: boolean;
+    prePostGainControl: boolean;
+    frequencyResponseAdjustment: boolean;
+    aiSelectedVolumeConsistency: boolean;
+    resolutionConversionCompleted: boolean;
+    originalJobId?: string;
+    voiceClarityEnhancement: boolean;
+    eqCurveOptimized: boolean;
+    bodyModificationDetails?: BodyModificationDetails;
+    skinEnhancementStrength: bigint;
+    aiSelectedTimeDomainAdjustments: boolean;
+    timeDomainAdjusted: boolean;
+    spectralDataGenerated: boolean;
+    videoCompressionOptimization: boolean;
+    processedFile?: ExternalBlob;
+    videoFormatStandardization: boolean;
+    volumeConsistencyValidated: boolean;
+    aiSelectedSpeechEnhancement: boolean;
+    colorGradingApplied: boolean;
+    lowLightEnhancementApplied: boolean;
+    voiceIsolation: boolean;
+    aiSelectedTransientReduction: boolean;
+    humanBodyEditingApplied: boolean;
+    normalizationApplied: boolean;
+    blemishCorrectionApplied: boolean;
+    aiSelectedProfessionalGradeDenoising: boolean;
+    comparisonTimestamp?: Time;
+    colorGradingStrength: bigint;
+    effectProviderLogo: string;
+    aiSelectedSpectralRepair: boolean;
+    spectralData?: SpectralData;
+    aiSelectedSpectralDataGeneration: boolean;
+    tattooMaskingApplied: boolean;
+    phaseAwareMaskingApplied: boolean;
+    videoDenoisingApplied: boolean;
+    aiSelectedDeepNoiseSuppression: boolean;
+}
+export interface EncodedAudio {
+    wavData: Array<number>;
 }
 export interface _CaffeineStorageRefillResult {
     success?: boolean;
@@ -106,6 +250,12 @@ export interface _CaffeineStorageRefillResult {
 export enum Mode {
     audio = "audio",
     video = "video"
+}
+export enum ProcessingStatus {
+    pending = "pending",
+    completed = "completed",
+    processing = "processing",
+    failed = "failed"
 }
 export enum UserRole {
     admin = "admin",
@@ -121,14 +271,24 @@ export interface backendInterface {
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    deleteProcessingJob(jobId: string): Promise<void>;
+    getAllProcessingJobs(): Promise<Array<ProcessingJob>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getMyMediaFiles(): Promise<Array<MediaFile>>;
+    getMyProcessingJobs(): Promise<Array<ProcessingJob>>;
+    getProcessingJob(jobId: string): Promise<ProcessingJob | null>;
+    getTripleCheckAnalysis(jobId: string): Promise<TripleCheckAnalysisResult | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getVideoComparisonConfig(configId: string): Promise<VideoComparisonConfig | null>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    saveVideoComparisonConfig(configId: string, config: VideoComparisonConfig): Promise<void>;
+    updateJobStatus(jobId: string, status: ProcessingStatus): Promise<void>;
+    updateTripleCheckAnalysis(jobId: string, analysisResult: TripleCheckAnalysisResult): Promise<void>;
     uploadMediaFile(filename: string, contentType: string, size: bigint, blob: ExternalBlob, mode: Mode, aiPromptText: string, aiSelectedSpeechEnhancement: boolean, aiSelectedDeepNoiseSuppression: boolean, aiSelectedPhaseAwareMasking: boolean, aiSelectedTimeDomainAdjustments: boolean, aiSelectedProfessionalGradeDenoising: boolean, aiSelectedTransientReduction: boolean, aiSelectedDynamicRangeCompression: boolean, aiSelectedSpectralRepair: boolean, aiSelectedAdaptiveFiltering: boolean, aiSelectedNormalization: boolean, aiSelectedVoiceIsolation: boolean, aiSelectedFrequencyTargeting: boolean, aiSelectedVoiceClarityEnhancement: boolean, aiSelectedEqCurveOptimization: boolean, aiSelectedVolumeConsistency: boolean, aiSelectedPrePostGainControl: boolean, aiSelectedPhaseAlignment: boolean, aiSelectedFrequencyResponseAdjustment: boolean, aiSelectedSpectralDataGeneration: boolean, effectProvider: string, effectProviderLogo: string): Promise<string>;
 }
-import type { ExternalBlob as _ExternalBlob, Mode as _Mode, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { BodyModificationDetails as _BodyModificationDetails, ExternalBlob as _ExternalBlob, Mode as _Mode, ProcessingJob as _ProcessingJob, ProcessingStatus as _ProcessingStatus, SpectralData as _SpectralData, Time as _Time, TripleCheckAnalysisResult as _TripleCheckAnalysisResult, UserProfile as _UserProfile, UserRole as _UserRole, VideoComparisonConfig as _VideoComparisonConfig, VideoComparisonData as _VideoComparisonData, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -243,46 +403,144 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async deleteProcessingJob(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteProcessingJob(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteProcessingJob(arg0);
+            return result;
+        }
+    }
+    async getAllProcessingJobs(): Promise<Array<ProcessingJob>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllProcessingJobs();
+                return from_candid_vec_n10(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllProcessingJobs();
+            return from_candid_vec_n10(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getCallerUserProfile(): Promise<UserProfile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserProfile();
-                return from_candid_opt_n10(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n26(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserProfile();
-            return from_candid_opt_n10(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n26(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCallerUserRole(): Promise<UserRole> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserRole();
-                return from_candid_UserRole_n11(this._uploadFile, this._downloadFile, result);
+                return from_candid_UserRole_n27(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserRole();
-            return from_candid_UserRole_n11(this._uploadFile, this._downloadFile, result);
+            return from_candid_UserRole_n27(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getMyMediaFiles(): Promise<Array<MediaFile>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMyMediaFiles();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMyMediaFiles();
+            return result;
+        }
+    }
+    async getMyProcessingJobs(): Promise<Array<ProcessingJob>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMyProcessingJobs();
+                return from_candid_vec_n10(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMyProcessingJobs();
+            return from_candid_vec_n10(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getProcessingJob(arg0: string): Promise<ProcessingJob | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getProcessingJob(arg0);
+                return from_candid_opt_n29(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getProcessingJob(arg0);
+            return from_candid_opt_n29(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getTripleCheckAnalysis(arg0: string): Promise<TripleCheckAnalysisResult | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getTripleCheckAnalysis(arg0);
+                return from_candid_opt_n15(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getTripleCheckAnalysis(arg0);
+            return from_candid_opt_n15(this._uploadFile, this._downloadFile, result);
         }
     }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getUserProfile(arg0);
-                return from_candid_opt_n10(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n26(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getUserProfile(arg0);
-            return from_candid_opt_n10(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n26(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getVideoComparisonConfig(arg0: string): Promise<VideoComparisonConfig | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getVideoComparisonConfig(arg0);
+                return from_candid_opt_n30(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getVideoComparisonConfig(arg0);
+            return from_candid_opt_n30(this._uploadFile, this._downloadFile, result);
         }
     }
     async isCallerAdmin(): Promise<boolean> {
@@ -313,28 +571,112 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async uploadMediaFile(arg0: string, arg1: string, arg2: bigint, arg3: ExternalBlob, arg4: Mode, arg5: string, arg6: boolean, arg7: boolean, arg8: boolean, arg9: boolean, arg10: boolean, arg11: boolean, arg12: boolean, arg13: boolean, arg14: boolean, arg15: boolean, arg16: boolean, arg17: boolean, arg18: boolean, arg19: boolean, arg20: boolean, arg21: boolean, arg22: boolean, arg23: boolean, arg24: boolean, arg25: string, arg26: string): Promise<string> {
+    async saveVideoComparisonConfig(arg0: string, arg1: VideoComparisonConfig): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.uploadMediaFile(arg0, arg1, arg2, await to_candid_ExternalBlob_n13(this._uploadFile, this._downloadFile, arg3), to_candid_Mode_n14(this._uploadFile, this._downloadFile, arg4), arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26);
+                const result = await this.actor.saveVideoComparisonConfig(arg0, arg1);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.uploadMediaFile(arg0, arg1, arg2, await to_candid_ExternalBlob_n13(this._uploadFile, this._downloadFile, arg3), to_candid_Mode_n14(this._uploadFile, this._downloadFile, arg4), arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26);
+            const result = await this.actor.saveVideoComparisonConfig(arg0, arg1);
+            return result;
+        }
+    }
+    async updateJobStatus(arg0: string, arg1: ProcessingStatus): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateJobStatus(arg0, to_candid_ProcessingStatus_n31(this._uploadFile, this._downloadFile, arg1));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateJobStatus(arg0, to_candid_ProcessingStatus_n31(this._uploadFile, this._downloadFile, arg1));
+            return result;
+        }
+    }
+    async updateTripleCheckAnalysis(arg0: string, arg1: TripleCheckAnalysisResult): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateTripleCheckAnalysis(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateTripleCheckAnalysis(arg0, arg1);
+            return result;
+        }
+    }
+    async uploadMediaFile(arg0: string, arg1: string, arg2: bigint, arg3: ExternalBlob, arg4: Mode, arg5: string, arg6: boolean, arg7: boolean, arg8: boolean, arg9: boolean, arg10: boolean, arg11: boolean, arg12: boolean, arg13: boolean, arg14: boolean, arg15: boolean, arg16: boolean, arg17: boolean, arg18: boolean, arg19: boolean, arg20: boolean, arg21: boolean, arg22: boolean, arg23: boolean, arg24: boolean, arg25: string, arg26: string): Promise<string> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.uploadMediaFile(arg0, arg1, arg2, await to_candid_ExternalBlob_n33(this._uploadFile, this._downloadFile, arg3), to_candid_Mode_n34(this._uploadFile, this._downloadFile, arg4), arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.uploadMediaFile(arg0, arg1, arg2, await to_candid_ExternalBlob_n33(this._uploadFile, this._downloadFile, arg3), to_candid_Mode_n34(this._uploadFile, this._downloadFile, arg4), arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26);
             return result;
         }
     }
 }
-function from_candid_UserRole_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
-    return from_candid_variant_n12(_uploadFile, _downloadFile, value);
+async function from_candid_ExternalBlob_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ExternalBlob): Promise<ExternalBlob> {
+    return await _downloadFile(value);
+}
+function from_candid_Mode_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Mode): Mode {
+    return from_candid_variant_n21(_uploadFile, _downloadFile, value);
+}
+async function from_candid_ProcessingJob_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ProcessingJob): Promise<ProcessingJob> {
+    return await from_candid_record_n12(_uploadFile, _downloadFile, value);
+}
+function from_candid_ProcessingStatus_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ProcessingStatus): ProcessingStatus {
+    return from_candid_variant_n14(_uploadFile, _downloadFile, value);
+}
+function from_candid_UserRole_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n28(_uploadFile, _downloadFile, value);
 }
 function from_candid__CaffeineStorageRefillResult_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: __CaffeineStorageRefillResult): _CaffeineStorageRefillResult {
     return from_candid_record_n5(_uploadFile, _downloadFile, value);
 }
-function from_candid_opt_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
+function from_candid_opt_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_TripleCheckAnalysisResult]): TripleCheckAnalysisResult | null {
+    return value.length === 0 ? null : value[0];
+}
+async function from_candid_opt_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ExternalBlob]): Promise<ExternalBlob | null> {
+    return value.length === 0 ? null : await from_candid_ExternalBlob_n16(_uploadFile, _downloadFile, value[0]);
+}
+function from_candid_opt_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Time]): Time | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_VideoComparisonData]): VideoComparisonData | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_BodyModificationDetails]): BodyModificationDetails | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_SpectralData]): SpectralData | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
+    return value.length === 0 ? null : value[0];
+}
+async function from_candid_opt_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ProcessingJob]): Promise<ProcessingJob | null> {
+    return value.length === 0 ? null : await from_candid_ProcessingJob_n11(_uploadFile, _downloadFile, value[0]);
+}
+function from_candid_opt_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_VideoComparisonConfig]): VideoComparisonConfig | null {
     return value.length === 0 ? null : value[0];
 }
 function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [boolean]): boolean | null {
@@ -342,6 +684,261 @@ function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Ar
 }
 function from_candid_opt_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
     return value.length === 0 ? null : value[0];
+}
+async function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    outputFormat: string;
+    aiSelectedEqCurveOptimization: boolean;
+    startTime: _Time;
+    status: _ProcessingStatus;
+    denoisingStrength: bigint;
+    tripleCheckAnalysisResult: [] | [_TripleCheckAnalysisResult];
+    aiPromptText: string;
+    dynamicRangeCompression: boolean;
+    transientReduction: boolean;
+    originalFile: _ExternalBlob;
+    upscalingStrength: bigint;
+    dialogueOnlyTrack: [] | [_ExternalBlob];
+    skinEnhancementApplied: boolean;
+    endTime: [] | [_Time];
+    aiSelectedVoiceClarityEnhancement: boolean;
+    enhancedResolution: [] | [string];
+    renderingOptimized: boolean;
+    speechEnhancementApplied: boolean;
+    aiSelectedFrequencyResponseAdjustment: boolean;
+    fullAudioTrack: [] | [_ExternalBlob];
+    phaseAlignmentPreserved: boolean;
+    tattooMaskingStrength: bigint;
+    deepNoiseSuppressionApplied: boolean;
+    skinToneAnalysisApplied: boolean;
+    aiSelectedFrequencyTargeting: boolean;
+    spectralRepair: boolean;
+    aiSelectedNormalization: boolean;
+    professionalGradeDenoising: boolean;
+    mode: _Mode;
+    user: Principal;
+    jobId: string;
+    aiSelectedPhaseAwareMasking: boolean;
+    aiSelectedAdaptiveFiltering: boolean;
+    aiSelectedPrePostGainControl: boolean;
+    aiSelectedPhaseAlignment: boolean;
+    adaptiveFiltering: boolean;
+    lowLightEnhancementStrength: bigint;
+    frameMappingCompleted: boolean;
+    frequencyTargeting: boolean;
+    aiSelectedVoiceIsolation: boolean;
+    videoUpscalingApplied: boolean;
+    bodyEditingStrength: bigint;
+    effectProvider: string;
+    processingTimeAfterUpload: [] | [bigint];
+    aiSelectedDynamicRangeCompression: boolean;
+    videoComparisonData: [] | [_VideoComparisonData];
+    statusRelevantForUser: boolean;
+    audioVideoSynchronizationMaintained: boolean;
+    prePostGainControl: boolean;
+    frequencyResponseAdjustment: boolean;
+    aiSelectedVolumeConsistency: boolean;
+    resolutionConversionCompleted: boolean;
+    originalJobId: [] | [string];
+    voiceClarityEnhancement: boolean;
+    eqCurveOptimized: boolean;
+    bodyModificationDetails: [] | [_BodyModificationDetails];
+    skinEnhancementStrength: bigint;
+    aiSelectedTimeDomainAdjustments: boolean;
+    timeDomainAdjusted: boolean;
+    spectralDataGenerated: boolean;
+    videoCompressionOptimization: boolean;
+    processedFile: [] | [_ExternalBlob];
+    videoFormatStandardization: boolean;
+    volumeConsistencyValidated: boolean;
+    aiSelectedSpeechEnhancement: boolean;
+    colorGradingApplied: boolean;
+    lowLightEnhancementApplied: boolean;
+    voiceIsolation: boolean;
+    aiSelectedTransientReduction: boolean;
+    humanBodyEditingApplied: boolean;
+    normalizationApplied: boolean;
+    blemishCorrectionApplied: boolean;
+    aiSelectedProfessionalGradeDenoising: boolean;
+    comparisonTimestamp: [] | [_Time];
+    colorGradingStrength: bigint;
+    effectProviderLogo: string;
+    aiSelectedSpectralRepair: boolean;
+    spectralData: [] | [_SpectralData];
+    aiSelectedSpectralDataGeneration: boolean;
+    tattooMaskingApplied: boolean;
+    phaseAwareMaskingApplied: boolean;
+    videoDenoisingApplied: boolean;
+    aiSelectedDeepNoiseSuppression: boolean;
+}): Promise<{
+    outputFormat: string;
+    aiSelectedEqCurveOptimization: boolean;
+    startTime: Time;
+    status: ProcessingStatus;
+    denoisingStrength: bigint;
+    tripleCheckAnalysisResult?: TripleCheckAnalysisResult;
+    aiPromptText: string;
+    dynamicRangeCompression: boolean;
+    transientReduction: boolean;
+    originalFile: ExternalBlob;
+    upscalingStrength: bigint;
+    dialogueOnlyTrack?: ExternalBlob;
+    skinEnhancementApplied: boolean;
+    endTime?: Time;
+    aiSelectedVoiceClarityEnhancement: boolean;
+    enhancedResolution?: string;
+    renderingOptimized: boolean;
+    speechEnhancementApplied: boolean;
+    aiSelectedFrequencyResponseAdjustment: boolean;
+    fullAudioTrack?: ExternalBlob;
+    phaseAlignmentPreserved: boolean;
+    tattooMaskingStrength: bigint;
+    deepNoiseSuppressionApplied: boolean;
+    skinToneAnalysisApplied: boolean;
+    aiSelectedFrequencyTargeting: boolean;
+    spectralRepair: boolean;
+    aiSelectedNormalization: boolean;
+    professionalGradeDenoising: boolean;
+    mode: Mode;
+    user: Principal;
+    jobId: string;
+    aiSelectedPhaseAwareMasking: boolean;
+    aiSelectedAdaptiveFiltering: boolean;
+    aiSelectedPrePostGainControl: boolean;
+    aiSelectedPhaseAlignment: boolean;
+    adaptiveFiltering: boolean;
+    lowLightEnhancementStrength: bigint;
+    frameMappingCompleted: boolean;
+    frequencyTargeting: boolean;
+    aiSelectedVoiceIsolation: boolean;
+    videoUpscalingApplied: boolean;
+    bodyEditingStrength: bigint;
+    effectProvider: string;
+    processingTimeAfterUpload?: bigint;
+    aiSelectedDynamicRangeCompression: boolean;
+    videoComparisonData?: VideoComparisonData;
+    statusRelevantForUser: boolean;
+    audioVideoSynchronizationMaintained: boolean;
+    prePostGainControl: boolean;
+    frequencyResponseAdjustment: boolean;
+    aiSelectedVolumeConsistency: boolean;
+    resolutionConversionCompleted: boolean;
+    originalJobId?: string;
+    voiceClarityEnhancement: boolean;
+    eqCurveOptimized: boolean;
+    bodyModificationDetails?: BodyModificationDetails;
+    skinEnhancementStrength: bigint;
+    aiSelectedTimeDomainAdjustments: boolean;
+    timeDomainAdjusted: boolean;
+    spectralDataGenerated: boolean;
+    videoCompressionOptimization: boolean;
+    processedFile?: ExternalBlob;
+    videoFormatStandardization: boolean;
+    volumeConsistencyValidated: boolean;
+    aiSelectedSpeechEnhancement: boolean;
+    colorGradingApplied: boolean;
+    lowLightEnhancementApplied: boolean;
+    voiceIsolation: boolean;
+    aiSelectedTransientReduction: boolean;
+    humanBodyEditingApplied: boolean;
+    normalizationApplied: boolean;
+    blemishCorrectionApplied: boolean;
+    aiSelectedProfessionalGradeDenoising: boolean;
+    comparisonTimestamp?: Time;
+    colorGradingStrength: bigint;
+    effectProviderLogo: string;
+    aiSelectedSpectralRepair: boolean;
+    spectralData?: SpectralData;
+    aiSelectedSpectralDataGeneration: boolean;
+    tattooMaskingApplied: boolean;
+    phaseAwareMaskingApplied: boolean;
+    videoDenoisingApplied: boolean;
+    aiSelectedDeepNoiseSuppression: boolean;
+}> {
+    return {
+        outputFormat: value.outputFormat,
+        aiSelectedEqCurveOptimization: value.aiSelectedEqCurveOptimization,
+        startTime: value.startTime,
+        status: from_candid_ProcessingStatus_n13(_uploadFile, _downloadFile, value.status),
+        denoisingStrength: value.denoisingStrength,
+        tripleCheckAnalysisResult: record_opt_to_undefined(from_candid_opt_n15(_uploadFile, _downloadFile, value.tripleCheckAnalysisResult)),
+        aiPromptText: value.aiPromptText,
+        dynamicRangeCompression: value.dynamicRangeCompression,
+        transientReduction: value.transientReduction,
+        originalFile: await from_candid_ExternalBlob_n16(_uploadFile, _downloadFile, value.originalFile),
+        upscalingStrength: value.upscalingStrength,
+        dialogueOnlyTrack: record_opt_to_undefined(await from_candid_opt_n17(_uploadFile, _downloadFile, value.dialogueOnlyTrack)),
+        skinEnhancementApplied: value.skinEnhancementApplied,
+        endTime: record_opt_to_undefined(from_candid_opt_n18(_uploadFile, _downloadFile, value.endTime)),
+        aiSelectedVoiceClarityEnhancement: value.aiSelectedVoiceClarityEnhancement,
+        enhancedResolution: record_opt_to_undefined(from_candid_opt_n19(_uploadFile, _downloadFile, value.enhancedResolution)),
+        renderingOptimized: value.renderingOptimized,
+        speechEnhancementApplied: value.speechEnhancementApplied,
+        aiSelectedFrequencyResponseAdjustment: value.aiSelectedFrequencyResponseAdjustment,
+        fullAudioTrack: record_opt_to_undefined(await from_candid_opt_n17(_uploadFile, _downloadFile, value.fullAudioTrack)),
+        phaseAlignmentPreserved: value.phaseAlignmentPreserved,
+        tattooMaskingStrength: value.tattooMaskingStrength,
+        deepNoiseSuppressionApplied: value.deepNoiseSuppressionApplied,
+        skinToneAnalysisApplied: value.skinToneAnalysisApplied,
+        aiSelectedFrequencyTargeting: value.aiSelectedFrequencyTargeting,
+        spectralRepair: value.spectralRepair,
+        aiSelectedNormalization: value.aiSelectedNormalization,
+        professionalGradeDenoising: value.professionalGradeDenoising,
+        mode: from_candid_Mode_n20(_uploadFile, _downloadFile, value.mode),
+        user: value.user,
+        jobId: value.jobId,
+        aiSelectedPhaseAwareMasking: value.aiSelectedPhaseAwareMasking,
+        aiSelectedAdaptiveFiltering: value.aiSelectedAdaptiveFiltering,
+        aiSelectedPrePostGainControl: value.aiSelectedPrePostGainControl,
+        aiSelectedPhaseAlignment: value.aiSelectedPhaseAlignment,
+        adaptiveFiltering: value.adaptiveFiltering,
+        lowLightEnhancementStrength: value.lowLightEnhancementStrength,
+        frameMappingCompleted: value.frameMappingCompleted,
+        frequencyTargeting: value.frequencyTargeting,
+        aiSelectedVoiceIsolation: value.aiSelectedVoiceIsolation,
+        videoUpscalingApplied: value.videoUpscalingApplied,
+        bodyEditingStrength: value.bodyEditingStrength,
+        effectProvider: value.effectProvider,
+        processingTimeAfterUpload: record_opt_to_undefined(from_candid_opt_n22(_uploadFile, _downloadFile, value.processingTimeAfterUpload)),
+        aiSelectedDynamicRangeCompression: value.aiSelectedDynamicRangeCompression,
+        videoComparisonData: record_opt_to_undefined(from_candid_opt_n23(_uploadFile, _downloadFile, value.videoComparisonData)),
+        statusRelevantForUser: value.statusRelevantForUser,
+        audioVideoSynchronizationMaintained: value.audioVideoSynchronizationMaintained,
+        prePostGainControl: value.prePostGainControl,
+        frequencyResponseAdjustment: value.frequencyResponseAdjustment,
+        aiSelectedVolumeConsistency: value.aiSelectedVolumeConsistency,
+        resolutionConversionCompleted: value.resolutionConversionCompleted,
+        originalJobId: record_opt_to_undefined(from_candid_opt_n19(_uploadFile, _downloadFile, value.originalJobId)),
+        voiceClarityEnhancement: value.voiceClarityEnhancement,
+        eqCurveOptimized: value.eqCurveOptimized,
+        bodyModificationDetails: record_opt_to_undefined(from_candid_opt_n24(_uploadFile, _downloadFile, value.bodyModificationDetails)),
+        skinEnhancementStrength: value.skinEnhancementStrength,
+        aiSelectedTimeDomainAdjustments: value.aiSelectedTimeDomainAdjustments,
+        timeDomainAdjusted: value.timeDomainAdjusted,
+        spectralDataGenerated: value.spectralDataGenerated,
+        videoCompressionOptimization: value.videoCompressionOptimization,
+        processedFile: record_opt_to_undefined(await from_candid_opt_n17(_uploadFile, _downloadFile, value.processedFile)),
+        videoFormatStandardization: value.videoFormatStandardization,
+        volumeConsistencyValidated: value.volumeConsistencyValidated,
+        aiSelectedSpeechEnhancement: value.aiSelectedSpeechEnhancement,
+        colorGradingApplied: value.colorGradingApplied,
+        lowLightEnhancementApplied: value.lowLightEnhancementApplied,
+        voiceIsolation: value.voiceIsolation,
+        aiSelectedTransientReduction: value.aiSelectedTransientReduction,
+        humanBodyEditingApplied: value.humanBodyEditingApplied,
+        normalizationApplied: value.normalizationApplied,
+        blemishCorrectionApplied: value.blemishCorrectionApplied,
+        aiSelectedProfessionalGradeDenoising: value.aiSelectedProfessionalGradeDenoising,
+        comparisonTimestamp: record_opt_to_undefined(from_candid_opt_n18(_uploadFile, _downloadFile, value.comparisonTimestamp)),
+        colorGradingStrength: value.colorGradingStrength,
+        effectProviderLogo: value.effectProviderLogo,
+        aiSelectedSpectralRepair: value.aiSelectedSpectralRepair,
+        spectralData: record_opt_to_undefined(from_candid_opt_n25(_uploadFile, _downloadFile, value.spectralData)),
+        aiSelectedSpectralDataGeneration: value.aiSelectedSpectralDataGeneration,
+        tattooMaskingApplied: value.tattooMaskingApplied,
+        phaseAwareMaskingApplied: value.phaseAwareMaskingApplied,
+        videoDenoisingApplied: value.videoDenoisingApplied,
+        aiSelectedDeepNoiseSuppression: value.aiSelectedDeepNoiseSuppression
+    };
 }
 function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     success: [] | [boolean];
@@ -355,7 +952,25 @@ function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint
         topped_up_amount: record_opt_to_undefined(from_candid_opt_n7(_uploadFile, _downloadFile, value.topped_up_amount))
     };
 }
-function from_candid_variant_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    pending: null;
+} | {
+    completed: null;
+} | {
+    processing: null;
+} | {
+    failed: null;
+}): ProcessingStatus {
+    return "pending" in value ? ProcessingStatus.pending : "completed" in value ? ProcessingStatus.completed : "processing" in value ? ProcessingStatus.processing : "failed" in value ? ProcessingStatus.failed : value;
+}
+function from_candid_variant_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    audio: null;
+} | {
+    video: null;
+}): Mode {
+    return "audio" in value ? Mode.audio : "video" in value ? Mode.video : value;
+}
+function from_candid_variant_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
 } | {
     user: null;
@@ -364,11 +979,17 @@ function from_candid_variant_n12(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): UserRole {
     return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
 }
-async function to_candid_ExternalBlob_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob): Promise<_ExternalBlob> {
+async function from_candid_vec_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_ProcessingJob>): Promise<Array<ProcessingJob>> {
+    return await Promise.all(value.map(async (x)=>await from_candid_ProcessingJob_n11(_uploadFile, _downloadFile, x)));
+}
+async function to_candid_ExternalBlob_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob): Promise<_ExternalBlob> {
     return await _uploadFile(value);
 }
-function to_candid_Mode_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Mode): _Mode {
-    return to_candid_variant_n15(_uploadFile, _downloadFile, value);
+function to_candid_Mode_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Mode): _Mode {
+    return to_candid_variant_n35(_uploadFile, _downloadFile, value);
+}
+function to_candid_ProcessingStatus_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ProcessingStatus): _ProcessingStatus {
+    return to_candid_variant_n32(_uploadFile, _downloadFile, value);
 }
 function to_candid_UserRole_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n9(_uploadFile, _downloadFile, value);
@@ -388,7 +1009,26 @@ function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
         proposed_top_up_amount: value.proposed_top_up_amount ? candid_some(value.proposed_top_up_amount) : candid_none()
     };
 }
-function to_candid_variant_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Mode): {
+function to_candid_variant_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ProcessingStatus): {
+    pending: null;
+} | {
+    completed: null;
+} | {
+    processing: null;
+} | {
+    failed: null;
+} {
+    return value == ProcessingStatus.pending ? {
+        pending: null
+    } : value == ProcessingStatus.completed ? {
+        completed: null
+    } : value == ProcessingStatus.processing ? {
+        processing: null
+    } : value == ProcessingStatus.failed ? {
+        failed: null
+    } : value;
+}
+function to_candid_variant_n35(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Mode): {
     audio: null;
 } | {
     video: null;

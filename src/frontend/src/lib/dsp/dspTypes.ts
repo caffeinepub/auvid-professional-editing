@@ -1,67 +1,62 @@
 /**
- * DSP Types and Utilities
- * 
- * Shared TypeScript types for browser-based audio DSP processing
- * using Web Audio API and OfflineAudioContext
+ * DSP Type Definitions and Utilities
  */
 
-export interface DSPStageOptions {
+export interface StageConfig {
   enabled: boolean;
   strength: number; // 0-100
 }
 
 export interface DSPProcessingOptions {
-  noiseSuppression?: DSPStageOptions;
-  transientSuppression?: DSPStageOptions;
-  voiceIsolation?: DSPStageOptions;
-  spectralRepair?: DSPStageOptions;
-  dynamicEQ?: DSPStageOptions;
-  deClickDeChirp?: DSPStageOptions;
+  noiseSuppression?: StageConfig;
+  transientSuppression?: StageConfig;
+  voiceIsolation?: StageConfig;
+  spectralRepair?: StageConfig;
+  dynamicEQ?: StageConfig;
+  deClickDeChirp?: StageConfig;
   lowBandAdjustment?: number; // -12 to +12 dB
   midBandAdjustment?: number; // -12 to +12 dB
   highBandAdjustment?: number; // -12 to +12 dB
   onProgress?: (progress: number, stage: string) => void;
+  diagnosticsMode?: boolean; // Enable checkpoint rendering
 }
 
 /**
- * Normalize strength value (0-100) to a usable range
- */
-export function normalizeStrength(strength: number, min: number, max: number): number {
-  return min + (strength / 100) * (max - min);
-}
-
-/**
- * Map strength to threshold value (inverted - higher strength = lower threshold)
+ * Map strength (0-100) to threshold value (dB)
  */
 export function strengthToThreshold(strength: number, minThreshold: number, maxThreshold: number): number {
-  // Invert: 0% strength = maxThreshold (lenient), 100% strength = minThreshold (aggressive)
-  return maxThreshold - (strength / 100) * (maxThreshold - minThreshold);
+  const normalized = strength / 100;
+  return minThreshold + (maxThreshold - minThreshold) * normalized;
 }
 
 /**
- * Map strength to ratio value
+ * Map strength (0-100) to compression ratio
  */
 export function strengthToRatio(strength: number, minRatio: number, maxRatio: number): number {
-  return minRatio + (strength / 100) * (maxRatio - minRatio);
+  const normalized = strength / 100;
+  return minRatio + (maxRatio - minRatio) * normalized;
 }
 
 /**
- * Map strength to Q factor
+ * Map strength (0-100) to filter Q value
  */
 export function strengthToQ(strength: number, minQ: number, maxQ: number): number {
-  return minQ + (strength / 100) * (maxQ - minQ);
+  const normalized = strength / 100;
+  return minQ + (maxQ - minQ) * normalized;
 }
 
 /**
- * Map strength to gain value
+ * Map strength (0-100) to gain value (dB)
  */
 export function strengthToGain(strength: number, minGain: number, maxGain: number): number {
-  return minGain + (strength / 100) * (maxGain - minGain);
+  const normalized = strength / 100;
+  return minGain + (maxGain - minGain) * normalized;
 }
 
 /**
- * Map strength to frequency value
+ * Map strength (0-100) to frequency value (Hz)
  */
 export function strengthToFrequency(strength: number, minFreq: number, maxFreq: number): number {
-  return minFreq + (strength / 100) * (maxFreq - minFreq);
+  const normalized = strength / 100;
+  return minFreq + (maxFreq - minFreq) * normalized;
 }

@@ -1,13 +1,14 @@
 # Specification
 
 ## Summary
-**Goal:** Improve the in-browser audio DSP tools (noise suppression, transient control, voice/dialogue isolation, spectral repair, dynamic EQ, and de-click/de-chirp) while keeping all video editing behavior and UI unchanged.
+**Goal:** Add an in-browser “Triple Check” audio diagnostics flow to pinpoint where post-processing static/artifacts are introduced, and harden the decode → DSP → encode pipeline to prevent invalid sample data from creating artifacts.
 
 **Planned changes:**
-- Upgrade `frontend/src/lib/audioProcessor.ts` to implement a stronger multi-stage DSP pipeline with distinct stages for noise suppression, transient/impulse suppression, voice/dialogue isolation, spectral repair, dynamic EQ, and de-click/de-chirp, all using browser-native Web Audio (e.g., `OfflineAudioContext`).
-- Wire existing strength sliders in `frontend/src/components/AdvancedAudioEditor.tsx` into the DSP pipeline so slider movement (0–100%) measurably changes processing intensity rather than only toggling stages.
-- Extend `AdvancedAudioEditor` UI to add missing controls for dynamic EQ and de-click/de-chirp (enable/disable + at least one strength/intensity control each), following the existing Switch + Slider pattern.
-- Replace AI/deep-learning/GPU marketing copy and progress-stage labels in advanced audio surfaces with accurate DSP wording (English-only), including labels emitted from `audioProcessor.ts`.
-- Ensure no changes that affect video editor UI, preview behavior, or video job-history comparison flows.
+- Add a “Triple Check” diagnostics run that compares three audio checkpoints: decoded input, an early/intermediate DSP stage, and final processed/encoded output.
+- Extend the in-browser DSP processing function to optionally produce deterministic intermediate checkpoint renders while preserving the existing normal (non-diagnostics) processing path.
+- Compute and display per-checkpoint metrics (sample rate, channels, duration, peak, RMS, DC offset estimate, NaN/Infinity count, clipping estimate) and highlight the first checkpoint that introduces abnormalities.
+- Add checkpoint audition/playback so users can listen to each stage to confirm where static begins.
+- Add a Diagnostics section in the Advanced Audio Editor with controls to run Triple Check, view results, and download a diagnostics report (JSON/text) including metrics and the settings used.
+- Fix static-causing errors by hardening the decode/DSP/encode pipeline: ensure AudioContext cleanup on all code paths, sanitize/clamp samples during WAV encoding, and surface clear English warnings/errors when abnormal values are detected.
 
-**User-visible outcome:** Users can apply noticeably stronger browser-based audio cleanup/enhancement with per-tool enable/disable and working strength controls (including new dynamic EQ and de-click/de-chirp controls), with accurate DSP labeling and no changes to video editing.
+**User-visible outcome:** Users can run “Triple Check” from the Advanced Audio Editor to see and hear where static/artifacts first appear across the pipeline, get a clear flagged likely source stage with metrics, download a diagnostics report, and experience fewer/no newly introduced static artifacts after processing due to safer validation and encoding.

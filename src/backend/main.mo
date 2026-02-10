@@ -9,13 +9,32 @@ import Storage "blob-storage/Storage";
 import AccessControl "authorization/access-control";
 import MixinStorage "blob-storage/Mixin";
 import MixinAuthorization "authorization/MixinAuthorization";
-
+import Migration "migration";
 
 // Unified Professional Grade Video Editor
 
-
+(with migration = Migration.run)
 actor {
   include MixinStorage();
+
+  type DecodedAudio = {
+    samples : [Float];
+  };
+
+  type DspBuffer = {
+    processedSamples : [Float];
+  };
+
+  type EncodedAudio = {
+    wavData : [Float];
+  };
+
+  type TripleCheckAnalysisResult = {
+    decodedInput : DecodedAudio;
+    earlyPipelineOutput : DspBuffer;
+    finalEncodedOutput : EncodedAudio;
+    noiseDifferences : [Float];
+  };
 
   type MediaFile = {
     filename : Text;
@@ -128,6 +147,7 @@ actor {
     aiSelectedSpectralDataGeneration : Bool;
     effectProvider : Text;
     effectProviderLogo : Text;
+    tripleCheckAnalysisResult : ?TripleCheckAnalysisResult;
   };
 
   type BodyModificationDetails = {
@@ -349,6 +369,7 @@ actor {
       aiSelectedSpectralDataGeneration;
       effectProvider;
       effectProviderLogo;
+      tripleCheckAnalysisResult = null;
     };
 
     let files = switch (userFiles.get(caller)) {
@@ -360,5 +381,164 @@ actor {
     userFiles.add(caller, files);
     processingJobs.add(jobId, processingJob);
     jobId;
+  };
+
+  // Get processing job by ID - users can only access their own jobs
+  public query ({ caller }) func getProcessingJob(jobId : Text) : async ?ProcessingJob {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can view processing jobs");
+    };
+
+    switch (processingJobs.get(jobId)) {
+      case (null) { null };
+      case (?job) {
+        if (job.user != caller and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: Can only view your own processing jobs");
+        };
+        ?job;
+      };
+    };
+  };
+
+  // Get all processing jobs for the caller
+  public query ({ caller }) func getMyProcessingJobs() : async [ProcessingJob] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can view processing jobs");
+    };
+
+    filterProcessingJobs(func(job) { job.user == caller });
+  };
+
+  // Get triple check analysis result for a specific job
+  public query ({ caller }) func getTripleCheckAnalysis(jobId : Text) : async ?TripleCheckAnalysisResult {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can view analysis results");
+    };
+
+    switch (processingJobs.get(jobId)) {
+      case (null) { null };
+      case (?job) {
+        if (job.user != caller and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: Can only view your own analysis results");
+        };
+        job.tripleCheckAnalysisResult;
+      };
+    };
+  };
+
+  // Update triple check analysis result - admin only or system internal
+  public shared ({ caller }) func updateTripleCheckAnalysis(
+    jobId : Text,
+    analysisResult : TripleCheckAnalysisResult
+  ) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can update analysis results");
+    };
+
+    switch (processingJobs.get(jobId)) {
+      case (null) { Runtime.trap("Job not found") };
+      case (?job) {
+        let updatedJob = {
+          job with
+          tripleCheckAnalysisResult = ?analysisResult;
+        };
+        processingJobs.add(jobId, updatedJob);
+      };
+    };
+  };
+
+  // Get all processing jobs - admin only
+  public query ({ caller }) func getAllProcessingJobs() : async [ProcessingJob] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can view all processing jobs");
+    };
+
+    filterProcessingJobs(func(_job) { true });
+  };
+
+  // Get user's media files
+  public query ({ caller }) func getMyMediaFiles() : async [MediaFile] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can view media files");
+    };
+
+    switch (userFiles.get(caller)) {
+      case (null) { [] };
+      case (?files) { files.toArray() };
+    };
+  };
+
+  // Delete processing job - users can only delete their own jobs
+  public shared ({ caller }) func deleteProcessingJob(jobId : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can delete jobs");
+    };
+
+    switch (processingJobs.get(jobId)) {
+      case (null) { Runtime.trap("Job not found") };
+      case (?job) {
+        if (job.user != caller and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: Can only delete your own jobs");
+        };
+        processingJobs.remove(jobId);
+      };
+    };
+  };
+
+  // Update job status - admin only
+  public shared ({ caller }) func updateJobStatus(
+    jobId : Text,
+    status : ProcessingStatus
+  ) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can update job status");
+    };
+
+    switch (processingJobs.get(jobId)) {
+      case (null) { Runtime.trap("Job not found") };
+      case (?job) {
+        let updatedJob = {
+          job with
+          status = status;
+          endTime = if (status == #completed or status == #failed) { ?Time.now() } else {
+            job.endTime;
+          };
+        };
+        processingJobs.add(jobId, updatedJob);
+      };
+    };
+  };
+
+  // Get video comparison config - users can only access their own configs
+  public query ({ caller }) func getVideoComparisonConfig(configId : Text) : async ?VideoComparisonConfig {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can view comparison configs");
+    };
+
+    switch (videoComparisonConfigs.get(configId)) {
+      case (null) { null };
+      case (?config) {
+        if (config.owner != caller and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: Can only view your own comparison configs");
+        };
+        ?config;
+      };
+    };
+  };
+
+  // Save video comparison config - users can only save their own configs
+  public shared ({ caller }) func saveVideoComparisonConfig(
+    configId : Text,
+    config : VideoComparisonConfig
+  ) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can save comparison configs");
+    };
+
+    if (config.owner != caller and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only save your own comparison configs");
+    };
+
+    videoComparisonConfigs.add(configId, config);
   };
 };

@@ -13,6 +13,7 @@
  * - De-click/de-chirp for artifact removal
  * - 3-band parametric EQ
  * - Real-time progress reporting
+ * - Diagnostics mode for checkpoint rendering
  */
 
 import { DSPProcessingOptions } from './dsp/dspTypes';
@@ -46,12 +47,15 @@ export async function processAudioWithDSP(
     midBandAdjustment = 0,
     highBandAdjustment = 0,
     onProgress = () => {},
+    diagnosticsMode = false,
   } = options;
 
   try {
     onProgress(5, 'Initializing DSP pipeline...');
 
     // Create offline context for processing
+    // Note: OfflineAudioContext does not have a close() method and is automatically
+    // cleaned up after rendering completes
     const offlineContext = new OfflineAudioContext(
       audioBuffer.numberOfChannels,
       audioBuffer.length,
@@ -71,58 +75,61 @@ export async function processAudioWithDSP(
     currentNode = buildPreNormalization(offlineContext, currentNode);
     progressStep += stageIncrement;
 
-    // Stage 2: Noise Suppression
-    if (noiseSuppression.enabled && noiseSuppression.strength > 0) {
-      onProgress(progressStep, 'Suppressing background noise...');
-      currentNode = buildNoiseSuppressionChain(offlineContext, currentNode, noiseSuppression.strength);
-    }
-    progressStep += stageIncrement;
+    // In diagnostics mode, skip all DSP stages except normalization
+    if (!diagnosticsMode) {
+      // Stage 2: Noise Suppression
+      if (noiseSuppression.enabled && noiseSuppression.strength > 0) {
+        onProgress(progressStep, 'Suppressing background noise...');
+        currentNode = buildNoiseSuppressionChain(offlineContext, currentNode, noiseSuppression.strength);
+      }
+      progressStep += stageIncrement;
 
-    // Stage 3: Transient Suppression
-    if (transientSuppression.enabled && transientSuppression.strength > 0) {
-      onProgress(progressStep, 'Reducing transient sounds...');
-      currentNode = buildTransientSuppressionChain(offlineContext, currentNode, transientSuppression.strength);
-    }
-    progressStep += stageIncrement;
+      // Stage 3: Transient Suppression
+      if (transientSuppression.enabled && transientSuppression.strength > 0) {
+        onProgress(progressStep, 'Reducing transient sounds...');
+        currentNode = buildTransientSuppressionChain(offlineContext, currentNode, transientSuppression.strength);
+      }
+      progressStep += stageIncrement;
 
-    // Stage 4: Voice Isolation
-    if (voiceIsolation.enabled && voiceIsolation.strength > 0) {
-      onProgress(progressStep, 'Isolating voice frequencies...');
-      currentNode = buildVoiceIsolationChain(offlineContext, currentNode, voiceIsolation.strength);
-    }
-    progressStep += stageIncrement;
+      // Stage 4: Voice Isolation
+      if (voiceIsolation.enabled && voiceIsolation.strength > 0) {
+        onProgress(progressStep, 'Isolating voice frequencies...');
+        currentNode = buildVoiceIsolationChain(offlineContext, currentNode, voiceIsolation.strength);
+      }
+      progressStep += stageIncrement;
 
-    // Stage 5: Spectral Repair
-    if (spectralRepair.enabled && spectralRepair.strength > 0) {
-      onProgress(progressStep, 'Repairing spectral distortion...');
-      currentNode = buildSpectralRepairChain(offlineContext, currentNode, spectralRepair.strength);
-    }
-    progressStep += stageIncrement;
+      // Stage 5: Spectral Repair
+      if (spectralRepair.enabled && spectralRepair.strength > 0) {
+        onProgress(progressStep, 'Repairing spectral distortion...');
+        currentNode = buildSpectralRepairChain(offlineContext, currentNode, spectralRepair.strength);
+      }
+      progressStep += stageIncrement;
 
-    // Stage 6: Dynamic EQ
-    if (dynamicEQ.enabled && dynamicEQ.strength > 0) {
-      onProgress(progressStep, 'Applying dynamic equalization...');
-      currentNode = buildDynamicEQChain(offlineContext, currentNode, dynamicEQ.strength);
-    }
-    progressStep += stageIncrement;
+      // Stage 6: Dynamic EQ
+      if (dynamicEQ.enabled && dynamicEQ.strength > 0) {
+        onProgress(progressStep, 'Applying dynamic equalization...');
+        currentNode = buildDynamicEQChain(offlineContext, currentNode, dynamicEQ.strength);
+      }
+      progressStep += stageIncrement;
 
-    // Stage 7: De-click/De-chirp
-    if (deClickDeChirp.enabled && deClickDeChirp.strength > 0) {
-      onProgress(progressStep, 'Removing clicks and chirps...');
-      currentNode = buildDeClickDeChirpChain(offlineContext, currentNode, deClickDeChirp.strength);
-    }
-    progressStep += stageIncrement;
+      // Stage 7: De-click/De-chirp
+      if (deClickDeChirp.enabled && deClickDeChirp.strength > 0) {
+        onProgress(progressStep, 'Removing clicks and chirps...');
+        currentNode = buildDeClickDeChirpChain(offlineContext, currentNode, deClickDeChirp.strength);
+      }
+      progressStep += stageIncrement;
 
-    // Stage 8: 3-Band Tone Profiling
-    if (lowBandAdjustment !== 0 || midBandAdjustment !== 0 || highBandAdjustment !== 0) {
-      onProgress(progressStep, 'Applying tone profiling...');
-      currentNode = build3BandEQ(offlineContext, currentNode, {
-        low: lowBandAdjustment,
-        mid: midBandAdjustment,
-        high: highBandAdjustment,
-      });
+      // Stage 8: 3-Band Tone Profiling
+      if (lowBandAdjustment !== 0 || midBandAdjustment !== 0 || highBandAdjustment !== 0) {
+        onProgress(progressStep, 'Applying tone profiling...');
+        currentNode = build3BandEQ(offlineContext, currentNode, {
+          low: lowBandAdjustment,
+          mid: midBandAdjustment,
+          high: highBandAdjustment,
+        });
+      }
+      progressStep += stageIncrement;
     }
-    progressStep += stageIncrement;
 
     // Stage 9: Final Normalization
     onProgress(90, 'Applying output normalization...');
@@ -141,6 +148,8 @@ export async function processAudioWithDSP(
     console.error('Audio processing error:', error);
     throw new Error('Failed to process audio: ' + (error instanceof Error ? error.message : 'Unknown error'));
   }
+  // Note: OfflineAudioContext does not need explicit cleanup via close()
+  // It is automatically cleaned up after startRendering() completes
 }
 
 // Export legacy name for backward compatibility

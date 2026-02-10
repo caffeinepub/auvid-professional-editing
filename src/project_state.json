@@ -1,341 +1,44 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 11,
-  "summary": "Auvid Professional Editing is a React + Motoko Internet Computer application for authenticated media upload, job tracking, and preview/download. Current direction: keep the video editor unchanged, and upgrade/strengthen the browser-based DSP audio toolset (noise reduction, transient suppression, voice/dialogue isolation, spectral repair, dynamic EQ, de-click/de-chirp) to be as robust/industrial-grade as feasible without deep-learning GPU models.",
+  "projectStateVersion": 3,
+  "summary": "AI-driven audio recording/processing app experiencing static/errors in recordings; user requests diagnostic tooling and a fix.",
   "architectural_notes": [
-    "Frontend uses React with TanStack React Query for all canister calls (queries + mutations) and periodic polling for job/status updates.",
-    "Authentication is via DFINITY Internet Identity using AuthClient, exposed through a React Context provider; identity persists across reloads.",
-    "Actor creation is centralized in a custom useActor hook that recreates the canister actor when identity changes and invalidates/refetches non-actor queries.",
-    "Backend is a single Motoko actor composed via mixins: storage-related endpoints (MixinStorage) and authorization endpoints (MixinAuthorization).",
-    "Authorization is role-based (admin/user/guest) with a one-time initialization flow: first caller providing a secret matching an environment token becomes admin; others become users.",
-    "Processing jobs are stored in in-memory Map/List structures keyed by jobId / Principal; job records include many booleans for applied features plus strength values for video effects.",
-    "Video WYSIWYG preview is implemented client-side via Canvas rendering loops driven by requestAnimationFrame, with sequential effect stages and performance indicators.",
-    "Audio enhancement is implemented client-side using OfflineAudioContext pipelines and MP3 encoding via the lamejs CDN dependency.",
-    "Blob storage maintenance relies on IC system primitives (e.g., dead blob enumeration/pruning) and an externally configured “cashier” canister for cycles top-ups.",
-    "An HTTP outcall helper module wraps IC management canister http_request for GET/POST with a response transform that strips headers."
+    "Add multi-stage audio validation/diagnostics ('triple checking') across capture, processing, and output to isolate where static is introduced."
   ],
   "known_issues": [
-    "Unauthenticated app state still creates an anonymous actor and attempts to fetch getCallerUserProfile; the backend traps for non-user callers, which can cause React Query errors unless explicitly gated.",
-    "Audio visualization components (DualWaveformDisplay/SpectralFrequencyDisplay) look up an <audio> element in the DOM by src, but JobsList plays audio via new Audio() without inserting it into the DOM, so visualizations may not initialize.",
-    "Backend state (processing jobs, profiles, files, comparison configs) is not stored in stable variables; upgrades will wipe data.",
-    "FileUpload “video processing” path reuses the original uploaded blob as the processed blob (i.e., processing is simulated client-side), so backend does not perform actual transcoding/enhancement.",
-    "Several backend feature flags exist but the frontend hardcodes many of them to false in completeProcessing; the data model is broader than current UI wiring.",
-    "Environment variables are mandatory for correct operation (e.g., CAFFEINE_ADMIN_TOKEN); missing values trap. Storage cashier env var name appears misspelled as CAFFFEINE_STORAGE_CASHIER_PRINCIPAL, which is easy to misconfigure.",
-    "WYSIWYG rendering loops call multiple setState updates per frame (stage labels, neural flags, FPS), which can cause performance issues and excessive re-renders for large videos.",
-    "VideoPreviewManager emits toast notifications on many layer/intensity changes, which can spam the user during slider drags.",
-    "Polling intervals are aggressive (jobs every 3s, status every 2s) and may increase load/cycles depending on deployment and user count.",
-    "Role registration relies on calling _initializeAccessControlWithSecret; if a client creates an actor but does not call init (e.g., custom tooling), many endpoints will trap with “User is not registered” or unauthorized."
+    "Static/noise appears after audio processing; recording may contain errors/artifacts."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "IF-1",
-      "title": "Internet Identity authentication provider",
-      "synonyms": [
-        "II auth",
-        "DFINITY AuthClient login"
-      ],
-      "description": "Provides login/logout and identity persistence via @dfinity/auth-client, exposing identity and login status through a React context (InternetIdentityProvider/useInternetIdentity).",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-2",
-      "title": "Canister actor lifecycle management",
-      "synonyms": [
-        "useActor",
-        "actor recreation on identity change"
-      ],
-      "description": "Creates an anonymous or authenticated canister actor based on the current identity, initializes access control with a secret token, and invalidates/refetches dependent React Query caches when the actor changes.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-3",
-      "title": "Role-based access control (admin/user/guest)",
-      "synonyms": [
-        "AccessControl",
-        "MixinAuthorization"
-      ],
-      "description": "Motoko access control module and mixin that assigns roles (first valid-secret caller becomes admin), supports role queries, admin checks, and admin-only role assignment.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-4",
-      "title": "User profile management and onboarding",
-      "synonyms": [
-        "ProfileSetupDialog",
-        "saveCallerUserProfile"
-      ],
-      "description": "Stores and retrieves a per-caller user profile (currently name) and prompts first-time authenticated users to create a profile before accessing the dashboard.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-5",
-      "title": "Media upload with mode selection and validation",
-      "synonyms": [
-        "FileUpload",
-        "drag-and-drop upload"
-      ],
-      "description": "Uploads audio/video files with type/size validation (≤500MB), drag-and-drop UI, upload progress via ExternalBlob.withUploadProgress, and creates a processing job on the backend.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-6",
-      "title": "Processing job lifecycle and metadata storage",
-      "synonyms": [
-        "ProcessingJob",
-        "startProcessing/completeProcessing"
-      ],
-      "description": "Backend creates and tracks per-user processing jobs with statuses (pending/processing/completed/failed), timestamps, output format, applied enhancement flags, optional tracks, spectral data, and effect strength values.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-7",
-      "title": "In-browser AI audio enhancement pipeline with MP3 encoding",
-      "synonyms": [
-        "audioProcessor",
-        "OfflineAudioContext pipeline"
-      ],
-      "description": "Processes audio locally using a multi-stage Web Audio pipeline (noise suppression, transient reduction, voice reconstruction/isolation, spectral filtering, clarity enhancement), then encodes output to MP3 using lamejs loaded via CDN.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-8",
-      "title": "Video enhancement option selection and simulated processing flow",
-      "synonyms": [
-        "video processing pipeline UI"
-      ],
-      "description": "Provides UI toggles for video enhancements (color grading, upscaling to 2K/4K, denoising, low-light, body editing, tattoo masking, skin enhancement) and simulates processing stages before marking the job complete.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-9",
-      "title": "Dashboard navigation (Editor/Upload/History)",
-      "synonyms": [
-        "Dashboard tabs"
-      ],
-      "description": "Main authenticated dashboard with tab navigation to the unified editor, upload workflow, and processing history view; maintains current mode selection.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-10",
-      "title": "Job history list with polling and enhancement badges",
-      "synonyms": [
-        "JobsList",
-        "processing history"
-      ],
-      "description": "Displays user processing jobs sorted by start time, polls for updates, shows status badges and detailed enhancement badges, and supports preview/download actions per job.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-11",
-      "title": "Media preview and downloads",
-      "synonyms": [
-        "audio preview",
-        "download MP3/MP4"
-      ],
-      "description": "Allows previewing processed audio in-browser and downloading processed media (MP3 for audio jobs, MP4 for video jobs) by fetching blobs and triggering browser downloads.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-12",
-      "title": "Audio visualizations (waveforms + spectrum)",
-      "synonyms": [
-        "DualWaveformDisplay",
-        "SpectralFrequencyDisplay"
-      ],
-      "description": "Renders dual time-domain waveforms and a frequency spectrum visualization using Web Audio AnalyserNode connected to an existing audio element (intended to synchronize with playback).",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-13",
-      "title": "Side-by-side video comparison with synchronized playback",
-      "synonyms": [
-        "VideoComparison",
-        "WYSIWYG preview"
-      ],
-      "description": "Provides synchronized original vs edited video playback, shared timeline/seek controls, volume/mute controls per side, fullscreen, and optional Canvas-based real-time effects rendering pipeline with performance indicators.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-14",
-      "title": "Real-time preview controls with effect intensities synced to backend",
-      "synonyms": [
-        "VideoPreviewManager",
-        "strength sliders"
-      ],
-      "description": "Interactive layer toggles and intensity sliders (0–200%) for multiple video effects, including global intensity, layer prioritization, and debounced persistence to backend via updateVideoEditStrengths/getVideoEditStrengths.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-15",
-      "title": "Unified NLE-style editor with timeline and live Canvas effects",
-      "synonyms": [
-        "UnifiedVideoEditor",
-        "NLE editor"
-      ],
-      "description": "Implements a local NLE-like workflow: import clips, media bin selection, program/source monitors, multi-track timeline UI with playhead seeking, and real-time Canvas-based effect rendering with performance stats; optionally syncs strengths to backend when jobId is provided.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-16",
-      "title": "Backend video comparison data and configuration APIs",
-      "synonyms": [
-        "saveVideoComparisonData",
-        "comparison config"
-      ],
-      "description": "Stores per-job video comparison metadata (URLs, layer stack, preview generated) and per-comparison configuration (side-by-side enabled, sync playback, filters, intensity level), plus job association/history queries.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-17",
-      "title": "Blob storage maintenance and cycles refill endpoints",
-      "synonyms": [
-        "MixinStorage",
-        "dead blob pruning"
-      ],
-      "description": "Exposes storage maintenance endpoints: update authorized gateway principals, list dead blobs, confirm deletion and trigger GC, check blob liveness, and refill cycles from a configured cashier canister.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-18",
-      "title": "HTTP outcall helper for GET/POST",
-      "synonyms": [
-        "ic:http_request wrapper"
-      ],
-      "description": "Provides Motoko functions to perform HTTP GET/POST outcalls using the IC management canister with a transform that strips headers and a fixed cycles budget.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "IF-19",
-      "title": "Theming, layout, and notifications",
-      "synonyms": [
-        "Tailwind UI",
-        "next-themes",
-        "sonner"
-      ],
-      "description": "TailwindCSS-based design system with dark/light themes (next-themes), sticky header/footer layout, and toast notifications via sonner.",
-      "reqIds": [],
-      "version": 1
-    },
-    {
-      "id": "feature-remove-the-ai-driven-audio-editing-workflow-from-the-audio-upload-editor-experience-and-replace-it-with-a-basic-audio-editor-flow-that-supports-selecting-an-audio-file-play-pause-seek-scrub-and-download-export-of-the-current-audio-no-ai-prompt-no-ai-plan-no-ai-processing-stages",
-      "title": "Remove the AI-driven audio editing workflow from the audio upload/editor experience and replace it with a basic audio editor flow that supports: selecting an audio file, play/pause, seek/scrub, and download/export of the current audio (no AI prompt, no AI plan, no AI processing stages).",
+      "id": "feature-implement-a-triple-check-audio-diagnostics-system-that-identifies-where-static-artifacts-are-introduced-by-comparing-1-decoded-input-audio-2-audio-after-early-pipeline-processing-and-3-final-processed-encoded-output-and-surface-the-results-in-the-ui",
+      "title": "Implement a \"Triple Check\" audio diagnostics system that identifies where static/artifacts are introduced by comparing (1) decoded input audio, (2) audio after early pipeline processing, and (3) final processed/encoded output, and surface the results in the UI.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-refactor-frontend-src-components-fileupload-tsx-so-that-when-selectedmode-mode-audio-uploading-does-not-require-an-ai-prompt-and-does-not-run-any-ai-inspired-processing-it-should-upload-the-original-audio-and-complete-the-job-using-the-original-blob-as-the-processed-blob-or-otherwise-mark-the-job-completed-without-ai-flags",
-      "title": "Refactor `frontend/src/components/FileUpload.tsx` so that when `selectedMode === Mode.audio`, uploading does not require an AI prompt and does not run any AI-inspired processing; it should upload the original audio and complete the job using the original blob as the processed blob (or otherwise mark the job completed without AI flags).",
+      "id": "feature-add-pipeline-checkpoint-support-to-the-in-browser-dsp-processor-so-that-the-audio-can-be-rendered-and-inspected-at-multiple-stages-without-changing-the-user-s-chosen-dsp-settings",
+      "title": "Add pipeline checkpoint support to the in-browser DSP processor so that the audio can be rendered and inspected at multiple stages without changing the user’s chosen DSP settings.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-update-audio-related-ui-copy-throughout-the-upload-editor-and-history-surfaces-to-remove-ai-marketing-language-and-describe-a-basic-audio-editor-instead-english-only",
-      "title": "Update audio-related UI copy throughout the upload/editor and history surfaces to remove AI/marketing language and describe a basic audio editor instead (English-only).",
+      "id": "feature-fix-the-error-s-that-can-cause-static-artifacts-after-processing-by-hardening-the-decode-dsp-encode-path-with-audio-safety-validations-and-robust-resource-cleanup",
+      "title": "Fix the error(s) that can cause static/artifacts after processing by hardening the decode → DSP → encode path with audio-safety validations and robust resource cleanup.",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     },
     {
-      "id": "feature-clean-up-the-audio-editing-code-paths-so-ai-audio-only-modules-are-no-longer-imported-required-by-the-basic-audio-editor-flow-e-g-remove-unused-imports-in-fileupload-tsx-and-ensure-the-audio-editor-build-does-not-depend-on-frontend-src-lib-aiaudioorchestrator-ts-for-audio-mode",
-      "title": "Clean up the audio editing code paths so AI-audio-only modules are no longer imported/required by the basic audio editor flow (e.g., remove unused imports in `FileUpload.tsx` and ensure the audio editor build does not depend on `frontend/src/lib/aiAudioOrchestrator.ts` for audio mode).",
+      "id": "feature-expose-a-user-facing-diagnostics-section-in-the-advanced-audio-editor-that-enables-running-triple-check-viewing-results-and-exporting-the-report-without-requiring-backend-changes",
+      "title": "Expose a user-facing \"Diagnostics\" section in the Advanced Audio Editor that enables running Triple Check, viewing results, and exporting the report, without requiring backend changes.",
       "reqIds": [
         "REQ-4"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-restore-the-video-editing-experience-to-how-it-was-before-the-recent-audio-editor-changes-ensuring-that-video-editing-ui-controls-preview-behavior-and-job-history-video-comparison-functionality-are-not-altered-or-degraded-by-audio-related-refactors",
-      "title": "Restore the video editing experience to how it was before the recent audio editor changes, ensuring that video editing UI, controls, preview behavior, and job history video comparison functionality are not altered or degraded by audio-related refactors.",
-      "reqIds": [
-        "REQ-5"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-implement-an-advanced-audio-editing-workflow-for-audio-mode-that-provides-user-controllable-processing-for-heavy-background-noise-suppression-transient-impulse-suppression-banging-clicks-knocks-voice-speech-isolation-voice-separated-from-other-sounds-spectral-repair-to-mitigate-speech-distortion-artifacts-and-high-mid-low-multi-band-tone-profiling-include-real-time-preview-playback-controls-and-export-download-of-the-edited-audio",
-      "title": "Implement an advanced audio editing workflow for audio mode that provides user-controllable processing for: heavy background noise suppression, transient/impulse suppression (banging/clicks/knocks), voice/speech isolation (voice separated from other sounds), spectral repair to mitigate speech distortion artifacts, and high/mid/low (multi-band) tone profiling; include real-time preview playback controls and export/download of the edited audio.",
-      "reqIds": [
-        "REQ-6"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-wire-the-advanced-audio-editing-workflow-into-the-existing-upload-job-lifecycle-so-that-running-audio-processing-produces-a-completed-job-with-the-processed-blob-set-and-the-job-s-applied-audio-flags-e-g-deepnoisesuppressionapplied-transientreduction-voiceisolation-spectralrepair-etc-reflect-the-user-selected-audio-enhancements",
-      "title": "Wire the advanced audio editing workflow into the existing upload/job lifecycle so that running audio processing produces a completed job with the processed blob set, and the job’s applied audio flags (e.g., deepNoiseSuppressionApplied, transientReduction, voiceIsolation, spectralRepair, etc.) reflect the user-selected audio enhancements.",
-      "reqIds": [
-        "REQ-7"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-audio-playback-works-reliably-across-major-browsers-platforms-by-using-browser-native-audio-playback-elements-for-preview-including-ios-safari-constraints-and-by-avoiding-approaches-that-prevent-waveform-spectrum-components-from-attaching-to-the-audio-element",
-      "title": "Ensure audio playback works reliably across major browsers/platforms by using browser-native audio playback elements for preview (including iOS/Safari constraints) and by avoiding approaches that prevent waveform/spectrum components from attaching to the audio element.",
-      "reqIds": [
-        "REQ-8"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-upgrade-the-in-browser-audio-dsp-pipeline-in-frontend-src-lib-audioprocessor-ts-to-provide-noticeably-stronger-results-for-noise-background-suppression-transient-impulse-suppression-clicks-knocks-bangs-voice-dialogue-isolation-spectral-repair-dynamic-eq-and-de-click-de-chirp-all-within-web-audio-api-offlineaudiocontext-constraints-no-deep-learning-model-claims",
-      "title": "Upgrade the in-browser audio DSP pipeline in `frontend/src/lib/audioProcessor.ts` to provide noticeably stronger results for: noise/background suppression, transient/impulse suppression (clicks/knocks/bangs), voice/dialogue isolation, spectral repair, dynamic EQ, and de-click/de-chirp (all within Web Audio API + OfflineAudioContext constraints; no deep-learning model claims).",
-      "reqIds": [
-        "REQ-9"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-wire-the-existing-strength-controls-in-frontend-src-components-advancedaudioeditor-tsx-e-g-noisesuppressionstrength-transientsuppressionstrength-voiceisolationstrength-spectralrepairstrength-into-the-dsp-pipeline-so-that-changing-a-slider-measurably-changes-the-processing-outcome-rather-than-only-toggling-stages-on-off",
-      "title": "Wire the existing strength controls in `frontend/src/components/AdvancedAudioEditor.tsx` (e.g., `noiseSuppressionStrength`, `transientSuppressionStrength`, `voiceIsolationStrength`, `spectralRepairStrength`) into the DSP pipeline so that changing a slider measurably changes the processing outcome rather than only toggling stages on/off.",
-      "reqIds": [
-        "REQ-10"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-extend-advancedaudioeditor-to-expose-controls-for-the-missing-requested-dsp-tools-dynamic-eq-and-de-click-de-chirp-in-addition-to-the-existing-noise-suppression-transient-suppression-voice-isolation-spectral-repair-and-tone-shaping-controls",
-      "title": "Extend `AdvancedAudioEditor` to expose controls for the missing requested DSP tools: dynamic EQ and de-click/de-chirp (in addition to the existing noise suppression, transient suppression, voice isolation, spectral repair, and tone shaping controls).",
-      "reqIds": [
-        "REQ-11"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-replace-ai-deep-learning-marketing-and-stage-copy-in-the-advanced-audio-surfaces-with-accurate-dsp-wording-e-g-rename-ai-engine-references-and-descriptions-in-advancedaudioeditor-tsx-and-progress-stage-labels-emitted-from-audioprocessor-ts-keep-all-user-facing-text-in-english",
-      "title": "Replace AI/deep-learning marketing and stage-copy in the advanced audio surfaces with accurate DSP wording (e.g., rename 'AI Engine' references and descriptions in `AdvancedAudioEditor.tsx` and progress stage labels emitted from `audioProcessor.ts`). Keep all user-facing text in English.",
-      "reqIds": [
-        "REQ-12"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-the-video-editing-experience-remains-unchanged-by-the-dsp-upgrade-work-no-behavior-ui-or-job-history-video-comparison-regressions",
-      "title": "Ensure the video editing experience remains unchanged by the DSP upgrade work (no behavior, UI, or job-history video comparison regressions).",
-      "reqIds": [
-        "REQ-13"
       ],
       "version": 1
     }
@@ -343,25 +46,18 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Replace AI-driven audio editing/enhancement workflow with a basic audio editor (upload, play/pause, optional simple waveform, export/download), removing advanced audio processing features",
+      "summary": "Implement a 'triple checking' diagnostic system element to trace where post-processing static/noise is introduced in recordings",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Restore video editing experience to how it was before (video editing was not supposed to change)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-4",
-      "summary": "Upgrade all browser-based DSP audio tools (stronger noise reduction, transient suppression, voice/dialogue isolation/source separation-style DSP, spectral repair, robust dynamic EQ, improved de-click/de-chirp) while keeping video editing unchanged",
+      "summary": "Fix the error causing static/noise after processing and recording errors",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "gameProjectType": "none",
-  "projectName": "Auvid Professional Editing",
+  "projectName": "Add triple-check audio diagnostics to trace and fix post-processing static in recordings",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

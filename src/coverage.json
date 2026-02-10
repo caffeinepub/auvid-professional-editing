@@ -1,96 +1,93 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-09T16:09:08.040Z",
+  "generatedAt": "2026-02-10T07:24:06.597Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 5,
-    "implemented": 5,
+    "total": 4,
+    "implemented": 4,
     "items": [
       {
-        "id": "REQ-10",
-        "summary": "Wire the existing strength controls in `frontend/src/components/AdvancedAudioEditor.tsx` (e.g., `noiseSuppressionStrength`, `transientSuppressionStrength`, `voiceIsolationStrength`, `spectralRepairStrength`) into the DSP pipeline so that changing a slider measurably changes the processing outcome rather than only toggling stages on/off.",
+        "id": "REQ-1",
+        "summary": "Implement a \"Triple Check\" audio diagnostics system that identifies where static/artifacts are introduced by comparing (1) decoded input audio, (2) audio after early pipeline processing, and (3) final processed/encoded output, and surface the results in the UI.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/AdvancedAudioEditor.tsx",
-          "frontend/src/lib/audioProcessor.ts"
+          "frontend/src/lib/tripleCheckDiagnostics.ts",
+          "frontend/src/lib/audioMetrics.ts",
+          "frontend/src/components/TripleCheckResults.tsx",
+          "frontend/src/components/AdvancedAudioEditor.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/AdvancedAudioEditor.tsx",
-          "frontend/src/lib/audioProcessor.ts"
+          "frontend/src/lib/tripleCheckDiagnostics.ts",
+          "frontend/src/lib/audioMetrics.ts",
+          "frontend/src/components/TripleCheckResults.tsx",
+          "frontend/src/components/AdvancedAudioEditor.tsx"
         ]
       },
       {
-        "id": "REQ-11",
-        "summary": "Extend `AdvancedAudioEditor` to expose controls for the missing requested DSP tools: dynamic EQ and de-click/de-chirp (in addition to the existing noise suppression, transient suppression, voice isolation, spectral repair, and tone shaping controls).",
+        "id": "REQ-2",
+        "summary": "Add pipeline checkpoint support to the in-browser DSP processor so that the audio can be rendered and inspected at multiple stages without changing the user’s chosen DSP settings.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/AdvancedAudioEditor.tsx",
-          "frontend/src/lib/audioProcessor.ts"
+          "frontend/src/lib/audioProcessor.ts",
+          "frontend/src/lib/dsp/dspTypes.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/AdvancedAudioEditor.tsx",
-          "frontend/src/lib/audioProcessor.ts"
+          "frontend/src/lib/audioProcessor.ts",
+          "frontend/src/lib/dsp/dspTypes.ts"
         ]
       },
       {
-        "id": "REQ-12",
-        "summary": "Replace AI/deep-learning marketing and stage-copy in the advanced audio surfaces with accurate DSP wording (e.g., rename 'AI Engine' references and descriptions in `AdvancedAudioEditor.tsx` and progress stage labels emitted from `audioProcessor.ts`). Keep all user-facing text in English.",
+        "id": "REQ-3",
+        "summary": "Fix the error(s) that can cause static/artifacts after processing by hardening the decode → DSP → encode path with audio-safety validations and robust resource cleanup.",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/lib/wavEncoder.ts",
           "frontend/src/components/AdvancedAudioEditor.tsx",
-          "frontend/src/lib/audioProcessor.ts",
-          "frontend/src/App.tsx"
+          "frontend/src/lib/tripleCheckDiagnostics.ts"
         ],
         "matchedFiles": [
+          "frontend/src/lib/wavEncoder.ts",
           "frontend/src/components/AdvancedAudioEditor.tsx",
-          "frontend/src/lib/audioProcessor.ts",
-          "frontend/src/App.tsx"
+          "frontend/src/lib/tripleCheckDiagnostics.ts"
         ]
       },
       {
-        "id": "REQ-13",
-        "summary": "Ensure the video editing experience remains unchanged by the DSP upgrade work (no behavior, UI, or job-history video comparison regressions).",
+        "id": "REQ-4",
+        "summary": "Expose a user-facing \"Diagnostics\" section in the Advanced Audio Editor that enables running Triple Check, viewing results, and exporting the report, without requiring backend changes.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/docs/video-smoke-test-checklist.md"
+          "frontend/src/components/AdvancedAudioEditor.tsx",
+          "frontend/src/components/TripleCheckResults.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/docs/video-smoke-test-checklist.md"
-        ]
-      },
-      {
-        "id": "REQ-9",
-        "summary": "Upgrade the in-browser audio DSP pipeline in `frontend/src/lib/audioProcessor.ts` to provide noticeably stronger results for: noise/background suppression, transient/impulse suppression (clicks/knocks/bangs), voice/dialogue isolation, spectral repair, dynamic EQ, and de-click/de-chirp (all within Web Audio API + OfflineAudioContext constraints; no deep-learning model claims).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/lib/audioProcessor.ts",
-          "frontend/src/lib/dsp/dspTypes.ts",
-          "frontend/src/lib/dsp/stageBuilders.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/lib/audioProcessor.ts",
-          "frontend/src/lib/dsp/dspTypes.ts",
-          "frontend/src/lib/dsp/stageBuilders.ts"
+          "frontend/src/components/AdvancedAudioEditor.tsx",
+          "frontend/src/components/TripleCheckResults.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/App.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
     "frontend/src/components/AdvancedAudioEditor.tsx",
-    "frontend/src/docs/video-smoke-test-checklist.md",
+    "frontend/src/components/TripleCheckResults.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/lib/audioMetrics.ts",
     "frontend/src/lib/audioProcessor.ts",
     "frontend/src/lib/dsp/dspTypes.ts",
-    "frontend/src/lib/dsp/stageBuilders.ts",
+    "frontend/src/lib/tripleCheckDiagnostics.ts",
+    "frontend/src/lib/wavEncoder.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

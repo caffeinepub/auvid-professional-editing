@@ -10,13 +10,155 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface BodyModificationDetails {
+  'bodyShapeAdjusted' : boolean,
+  'complexionAnalysisDone' : boolean,
+  'sizeAdjusted' : boolean,
+  'frameTransitionSmoothed' : boolean,
+  'skinToneMatched' : boolean,
+  'proportionsMaintained' : boolean,
+  'inkColorCorrected' : boolean,
+  'personalizedEnhancement' : boolean,
+  'tattooAreasDetected' : boolean,
+  'adaptiveFilteringApplied' : boolean,
+  'blemishCorrectionDone' : boolean,
+}
+export interface DecodedAudio { 'samples' : Array<number> }
+export interface DspBuffer { 'processedSamples' : Array<number> }
+export interface EncodedAudio { 'wavData' : Array<number> }
 export type ExternalBlob = Uint8Array;
+export interface MediaFile {
+  'contentType' : string,
+  'size' : bigint,
+  'filename' : string,
+  'uploadTime' : Time,
+}
 export type Mode = { 'audio' : null } |
   { 'video' : null };
+export interface ProcessingJob {
+  'outputFormat' : string,
+  'aiSelectedEqCurveOptimization' : boolean,
+  'startTime' : Time,
+  'status' : ProcessingStatus,
+  'denoisingStrength' : bigint,
+  'tripleCheckAnalysisResult' : [] | [TripleCheckAnalysisResult],
+  'aiPromptText' : string,
+  'dynamicRangeCompression' : boolean,
+  'transientReduction' : boolean,
+  'originalFile' : ExternalBlob,
+  'upscalingStrength' : bigint,
+  'dialogueOnlyTrack' : [] | [ExternalBlob],
+  'skinEnhancementApplied' : boolean,
+  'endTime' : [] | [Time],
+  'aiSelectedVoiceClarityEnhancement' : boolean,
+  'enhancedResolution' : [] | [string],
+  'renderingOptimized' : boolean,
+  'speechEnhancementApplied' : boolean,
+  'aiSelectedFrequencyResponseAdjustment' : boolean,
+  'fullAudioTrack' : [] | [ExternalBlob],
+  'phaseAlignmentPreserved' : boolean,
+  'tattooMaskingStrength' : bigint,
+  'deepNoiseSuppressionApplied' : boolean,
+  'skinToneAnalysisApplied' : boolean,
+  'aiSelectedFrequencyTargeting' : boolean,
+  'spectralRepair' : boolean,
+  'aiSelectedNormalization' : boolean,
+  'professionalGradeDenoising' : boolean,
+  'mode' : Mode,
+  'user' : Principal,
+  'jobId' : string,
+  'aiSelectedPhaseAwareMasking' : boolean,
+  'aiSelectedAdaptiveFiltering' : boolean,
+  'aiSelectedPrePostGainControl' : boolean,
+  'aiSelectedPhaseAlignment' : boolean,
+  'adaptiveFiltering' : boolean,
+  'lowLightEnhancementStrength' : bigint,
+  'frameMappingCompleted' : boolean,
+  'frequencyTargeting' : boolean,
+  'aiSelectedVoiceIsolation' : boolean,
+  'videoUpscalingApplied' : boolean,
+  'bodyEditingStrength' : bigint,
+  'effectProvider' : string,
+  'processingTimeAfterUpload' : [] | [bigint],
+  'aiSelectedDynamicRangeCompression' : boolean,
+  'videoComparisonData' : [] | [VideoComparisonData],
+  'statusRelevantForUser' : boolean,
+  'audioVideoSynchronizationMaintained' : boolean,
+  'prePostGainControl' : boolean,
+  'frequencyResponseAdjustment' : boolean,
+  'aiSelectedVolumeConsistency' : boolean,
+  'resolutionConversionCompleted' : boolean,
+  'originalJobId' : [] | [string],
+  'voiceClarityEnhancement' : boolean,
+  'eqCurveOptimized' : boolean,
+  'bodyModificationDetails' : [] | [BodyModificationDetails],
+  'skinEnhancementStrength' : bigint,
+  'aiSelectedTimeDomainAdjustments' : boolean,
+  'timeDomainAdjusted' : boolean,
+  'spectralDataGenerated' : boolean,
+  'videoCompressionOptimization' : boolean,
+  'processedFile' : [] | [ExternalBlob],
+  'videoFormatStandardization' : boolean,
+  'volumeConsistencyValidated' : boolean,
+  'aiSelectedSpeechEnhancement' : boolean,
+  'colorGradingApplied' : boolean,
+  'lowLightEnhancementApplied' : boolean,
+  'voiceIsolation' : boolean,
+  'aiSelectedTransientReduction' : boolean,
+  'humanBodyEditingApplied' : boolean,
+  'normalizationApplied' : boolean,
+  'blemishCorrectionApplied' : boolean,
+  'aiSelectedProfessionalGradeDenoising' : boolean,
+  'comparisonTimestamp' : [] | [Time],
+  'colorGradingStrength' : bigint,
+  'effectProviderLogo' : string,
+  'aiSelectedSpectralRepair' : boolean,
+  'spectralData' : [] | [SpectralData],
+  'aiSelectedSpectralDataGeneration' : boolean,
+  'tattooMaskingApplied' : boolean,
+  'phaseAwareMaskingApplied' : boolean,
+  'videoDenoisingApplied' : boolean,
+  'aiSelectedDeepNoiseSuppression' : boolean,
+}
+export type ProcessingStatus = { 'pending' : null } |
+  { 'completed' : null } |
+  { 'processing' : null } |
+  { 'failed' : null };
+export interface SpectralData {
+  'frequencyBins' : Array<bigint>,
+  'duration' : number,
+  'frequencyCrossoverPoints' : Array<bigint>,
+  'timestamp' : Time,
+  'intensityValues' : Array<number>,
+}
+export type Time = bigint;
+export interface TripleCheckAnalysisResult {
+  'decodedInput' : DecodedAudio,
+  'earlyPipelineOutput' : DspBuffer,
+  'noiseDifferences' : Array<number>,
+  'finalEncodedOutput' : EncodedAudio,
+}
 export interface UserProfile { 'name' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
+export interface VideoComparisonConfig {
+  'active' : boolean,
+  'owner' : Principal,
+  'defaultFilters' : Array<string>,
+  'lastConfigUpdate' : Time,
+  'synchronizedPlayback' : boolean,
+  'sideBySideEnabled' : boolean,
+  'intensityLevel' : number,
+}
+export interface VideoComparisonData {
+  'activeLayerStack' : Array<string>,
+  'jobId' : string,
+  'editedVideoUrl' : string,
+  'lastModified' : Time,
+  'originalVideoUrl' : string,
+  'previewGenerated' : boolean,
+}
 export interface _CaffeineStorageCreateCertificateResult {
   'method' : string,
   'blob_hash' : string,
@@ -46,11 +188,33 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'deleteProcessingJob' : ActorMethod<[string], undefined>,
+  'getAllProcessingJobs' : ActorMethod<[], Array<ProcessingJob>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getMyMediaFiles' : ActorMethod<[], Array<MediaFile>>,
+  'getMyProcessingJobs' : ActorMethod<[], Array<ProcessingJob>>,
+  'getProcessingJob' : ActorMethod<[string], [] | [ProcessingJob]>,
+  'getTripleCheckAnalysis' : ActorMethod<
+    [string],
+    [] | [TripleCheckAnalysisResult]
+  >,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'getVideoComparisonConfig' : ActorMethod<
+    [string],
+    [] | [VideoComparisonConfig]
+  >,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'saveVideoComparisonConfig' : ActorMethod<
+    [string, VideoComparisonConfig],
+    undefined
+  >,
+  'updateJobStatus' : ActorMethod<[string, ProcessingStatus], undefined>,
+  'updateTripleCheckAnalysis' : ActorMethod<
+    [string, TripleCheckAnalysisResult],
+    undefined
+  >,
   'uploadMediaFile' : ActorMethod<
     [
       string,
